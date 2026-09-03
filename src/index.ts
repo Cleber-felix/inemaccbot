@@ -198,6 +198,10 @@ export function criarServico(cfg: Config, deps: DepsServico): Servico {
   let transp: TransporteServico | null = null;
   let workers: { w: Worker; n: number }[] = [];
   let varrendo = false;
+  /** job.id → notificação em voo. O worker chama `notificar` na conclusão, e a
+   * reentrega (§8) pode chamar o MESMO job antes de `marcarNotificado` correr —
+   * sem dedup, a mensagem sai duas vezes no chat. */
+  const notificacoesEmVoo = new Map<number, Promise<void>>();
   /** Preenchido no `iniciar()`, junto do transporte — antes dele não há para
    * onde notificar. */
   let notificar: ((job: Job) => Promise<void>) | null = null;
@@ -520,9 +524,19 @@ export function criarServico(cfg: Config, deps: DepsServico): Servico {
     // O notificador do worker faz as duas coisas: avisa sobre o JOB (quando ele
     // tem dono no chat) e solta os avisos de FLUXO que o avanço empilhou.
     soltarFluxo = soltarEventosDeFluxo;
-    notificar = async (job: Job): Promise<void> => {
-      await notificarJob(job);
-      await soltarEventosDeFluxo();
+    notificar = (job: Job): Promise<void> => {
+      const existente = notificacoesEmVoo.get(job.id);
+      if (existente) return existente;
+      const envio = (async (): Promise<void> => {
+        try {
+          await notificarJob(job);
+          await soltarEventosDeFluxo();
+        } finally {
+          notificacoesEmVoo.delete(job.id);
+        }
+      })();
+      notificacoesEmVoo.set(job.id, envio);
+      return envio;
     };
 
     // 6. §8: a recuperação acabou de marcar jobs como `failed` — uma transição

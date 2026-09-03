@@ -436,6 +436,22 @@ describe('notificação', () => {
     expect(registro.mensagens).toHaveLength(1);
     expect(registro.mensagens[0]?.texto).toMatch(/Job 1 conclu/);
   });
+
+  // O job já está `done` no banco quando `aoTerminar` chama `notificar`, mas
+  // `marcarNotificado` só assenta DEPOIS do envio — com envio lento (rede de
+  // verdade) e `heartbeatMs` curto, a reentrega (§8) enxerga o mesmo job
+  // pendente e chamava `notificar` de novo, duplicando a mensagem no chat.
+  it('notificação lenta não duplica com a varredura de reentrega concorrente', async () => {
+    const { svc, registro } = montar(OK, {}, 60);
+    await svc.iniciar();
+    svc.fila.enfileirar({ fila: 'io', kind: 'function', tarefa: 'fake.ok', input: 'x', chat_id: 42 });
+
+    await ate(() => svc.fila.obter(1)?.status === 'done', 3_000);
+    await new Promise((r) => setTimeout(r, 200));
+    await svc.parar();
+
+    expect(registro.mensagens).toHaveLength(1);
+  });
 });
 
 describe('avisos que um COMANDO empilha', () => {
