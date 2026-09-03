@@ -18,7 +18,13 @@ export function argumentosClaude(ctx: ContextoExecucao): string[] {
   // o do perfil (skills.json / fase / override), que já vem sempre resolvido.
   const m = ctx.perfil.modelo;
   const modelo = ehNivel(m) ? nivel('claude', m).modelo ?? m : m;
-  return ['--model', modelo, '--effort', ctx.perfil.esforco, '-p', ctx.prompt];
+  const tarefaAutonoma =
+    ctx.prompt.startsWith('Você vai TRANSCREVER') ||
+    ctx.prompt.includes('imagens-agnes') ||
+    ctx.prompt.includes('video-explicativo') ||
+    ctx.prompt.includes('videos-cursos-inema');
+  const ferramentas = tarefaAutonoma ? ['--allowedTools', 'Bash(*)', 'Read', 'Write'] : [];
+  return ['--model', modelo, '--effort', ctx.perfil.esforco, ...ferramentas, '-p', ctx.prompt];
 }
 
 /**

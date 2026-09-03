@@ -32,6 +32,23 @@ describe('argumentosClaude', () => {
     expect(args[args.length - 1]).toBe('rm -rf / ; echo oi');
     expect(args.join(' ')).not.toContain('&&');
   });
+
+  // As skills autônomas (transcrever, imagens-agnes, video-explicativo,
+  // videos-cursos-inema) rodam yt-dlp/ffmpeg/curl e escrevem o artefato final —
+  // sem essas ferramentas liberadas, o agente nem consegue seguir o prompt.
+  it('libera Bash/Read/Write para skills autônomas', () => {
+    const args = argumentosClaude({ ...ctx('sonnet', 'low'), prompt: 'Você vai TRANSCREVER um arquivo' });
+    expect(args).toEqual([
+      '--model', 'sonnet', '--effort', 'low',
+      '--allowedTools', 'Bash(*)', 'Read', 'Write',
+      '-p', 'Você vai TRANSCREVER um arquivo',
+    ]);
+  });
+
+  it('não libera ferramentas fora da lista de skills autônomas', () => {
+    expect(argumentosClaude(ctx('sonnet', 'low')))
+      .toEqual(['--model', 'sonnet', '--effort', 'low', '-p', 'faça X']);
+  });
 });
 
 describe('registro de motores', () => {

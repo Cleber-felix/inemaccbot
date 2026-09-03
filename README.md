@@ -377,6 +377,7 @@ de um render.
 | **CLI do HeyGen** | binário `heygen` no PATH, ou o caminho em `HEYGEN_CLI` | idem |
 | **Servidor do link final** | `PUBLICO_DIR` (a pasta servida) + `PUBLICO_URLS` (as bases de URL) | o vídeo é produzido, mas a mensagem chega sem link para baixar. São **duas** URLs porque a máquina fica em duas redes ao mesmo tempo |
 | **Repos de domínio** | `promoavatar` e `promoavatar3` como irmãos (passo 2) | os fluxos quebram na primeira fase |
+| **Cookies do YouTube (opcional)** | arquivo `~/.cache/inemaccbot/yt-cookies.txt`, formato Netscape, exportado à mão de um navegador logado (ex.: extensão "Get cookies.txt LOCALLY") | sem ele, a skill `transcrever` funciona normalmente na maioria dos links; só falha em vídeos que o YouTube bloqueia por bot-check ("Sign in to confirm you're not a bot") — com o arquivo presente, ela tenta de novo com `--cookies`. É caminho, não segredo: o arquivo mora fora do repo, como o perfil do HeyGen acima |
 
 Regra geral: **`.env` guarda caminho e id; segredo de terceiro mora no arquivo do
 dono dele.** É por isso que a key do HeyGen não foi copiada para cá.

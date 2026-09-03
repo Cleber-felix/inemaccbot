@@ -15,7 +15,7 @@
       "esforco": "low"
     },
     "aceita_destino": false,
-    "descricao": "baixa o áudio do link e devolve o TEXTO do que é falado (Whisper local, via inemavox)",
+    "descricao": "baixa o áudio do link e devolve o TEXTO do que é falado (Groq whisper-large-v3-turbo)",
     "exemplo": "transcrever: https://vt.tiktok.com/XXXX"
   },
   {
