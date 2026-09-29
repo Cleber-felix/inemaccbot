@@ -1,5 +1,7 @@
 # inemaccbot
 
+**🇧🇷 [Português](README.md) · 🇺🇸 [English](README.en.md) · 🇪🇸 [Español](README.es.md)**
+
 Gateway Telegram + fila durável. Sucessor do `inemaccvbot`.
 
 ## 📖 Guia de uso

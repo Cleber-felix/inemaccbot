@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>inemaccbot — gateway Telegram + cola duradera para ejecutar agentes</title>
+<meta content="Bot de Telegram con cola duradera en SQLite que ejecuta skills y flujos de varias fases con estado, portón humano y reanudación. Se incorpora un dominio nuevo sin una línea de código." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0c0c10; --bg2:#14141b; --card:#16161e; --line:#272730;
+    --txt:#e9e9ee; --mut:#9a9aa6; --amb:#E2A23B; --amb2:#f0c070; --sky:#38bdf8; --pro:#cbd5e1;
+    color-scheme:dark;
+  }
+  body.light{
+    --bg:#f6f7f9; --bg2:#eceef2; --card:#ffffff; --line:#e1e3ea;
+    --txt:#1a1a22; --mut:#5b5b68; --amb:#b9791d; --amb2:#a16207; --sky:#0369a1; --pro:#b45309;
+    color-scheme:light;
+  }
+  body.light .hero .glow{opacity:.5}
+  body.light pre{background:#0e0e14;color:#d6d6e0}
+  body.light pre .c{color:#8a8a98}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.65 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:Sora,sans-serif;line-height:1.15;margin:0}
+  a{color:var(--amb);text-decoration:none}
+  code,pre{font-family:"JetBrains Mono",monospace}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+  .mut{color:var(--mut)} .amb{color:var(--amb)}
+  .chip{display:inline-block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amb);font-weight:600;font-family:Sora}
+  nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(12,12,16,.78);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:22px;height:60px}
+  nav .brand{display:flex;align-items:center;gap:8px;font-family:Sora;font-weight:800;letter-spacing:-.02em;color:var(--amb)}
+  nav .brand .emoji{font-size:1.25rem}
+  nav .sep{color:var(--mut);opacity:.45}
+  nav .inema{color:var(--sky);font-weight:600;font-size:.88rem;font-family:Sora}
+  nav .inema:hover{filter:brightness(1.15)}
+  nav .pro{color:var(--pro);font-weight:600;font-size:.88rem;font-family:Sora}
+  nav .pro:hover{filter:brightness(1.15)}
+  nav .clubpro{display:inline-flex;align-items:center;gap:6px}
+  nav .links{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:.92rem}
+  nav .links a.sec{color:var(--mut)} nav .links a.sec:hover{color:var(--txt)}
+  .tgl{background:var(--bg2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem}
+  .tgl:hover{border-color:var(--amb)}
+  .btn{display:inline-block;background:var(--amb);color:#1a1206;font-weight:600;padding:.6em 1.05em;border-radius:10px;font-family:Sora}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  @media(max-width:760px){nav .links a.sec{display:none}}
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero .glow{position:absolute;inset:-40% -20% auto auto;width:70%;height:600px;background:radial-gradient(closest-side,rgba(226,162,59,.22),transparent 70%);pointer-events:none}
+  .hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:74px 22px}
+  .hero h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.025em}
+  .hero p.lead{font-size:1.18rem;color:var(--mut);margin:1.1em 0 1.6em;max-width:34ch}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .hero figure{margin:0;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px -30px #000}
+  .hero figure img{width:100%;display:block}
+  @media(max-width:780px){.hero .wrap{grid-template-columns:1fr;padding:48px 22px}}
+  section{padding:62px 0;border-bottom:1px solid var(--line)}
+  section h2{font-size:clamp(1.5rem,3.4vw,2.1rem);font-weight:800;letter-spacing:-.02em}
+  section .sub{color:var(--mut);margin:.6em 0 2em;max-width:62ch}
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3,.g4{grid-template-columns:1fr 1fr}}
+  @media(max-width:540px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card h3{font-size:1.05rem;margin-bottom:.4em}
+  .card p{color:var(--mut);font-size:.92rem;margin:0}
+  .num{display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:8px;background:rgba(226,162,59,.14);color:var(--amb);font-family:Sora;font-weight:800;font-size:.9rem;margin-bottom:.7em}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .flow span{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:.45em .9em;font-size:.85rem;font-family:Sora;font-weight:600}
+  .flow .arr{color:var(--amb);border:none;background:none;padding:0 .1em}
+  pre{background:#0a0a0e;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;font-size:.86rem;line-height:1.6;color:#d6d6e0}
+  pre .c{color:#6f6f7c} pre .k{color:var(--amb2)} pre .s{color:#9ece6a}
+  .step{display:grid;grid-template-columns:46px 1fr;gap:16px;margin-bottom:26px}
+  .step .b{width:46px;height:46px;border-radius:12px;background:var(--amb);color:#1a1206;font-family:Sora;font-weight:800;font-size:1.25rem;display:flex;align-items:center;justify-content:center}
+  .step h3{font-size:1.12rem;margin-bottom:.3em}
+  .step p{color:var(--mut);margin:.2em 0 .7em}
+  .ex{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:680px){.ex{grid-template-columns:1fr}}
+  .ex figure{margin:0;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+  .ex figure img{width:100%;display:block}
+  .ex figcaption{padding:12px 14px;font-size:.88rem;color:var(--mut);background:var(--card)}
+  .phase{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .phase:last-child{border:none}
+  .phase .tag{flex:0 0 92px;font-family:Sora;font-weight:800;color:var(--amb)}
+  .phase .d strong{display:block;margin-bottom:.2em}
+  .phase .d span{color:var(--mut);font-size:.92rem}
+  footer{padding:46px 0;text-align:center;color:var(--mut);font-size:.9rem}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.3em .8em;font-size:.78rem;color:var(--mut);margin:0 4px}
+</style>
+<link href="https://inematds.github.io/inemaccbot/guia/" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/inemaccbot/guia/en/" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/inemaccbot/guia/es/" hreflang="es" rel="alternate"/></head>
+<body><div class="inema-lang" style="position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:2px;padding:4px;border-radius:10px;background:rgba(12,12,16,.82);border:1px solid rgba(226,162,59,.45);font:600 12px/1 Sora,Inter,system-ui,sans-serif;backdrop-filter:blur(8px)" translate="no"><a href="../" hreflang="pt-BR" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">PT</a><a href="../en/" hreflang="en" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">EN</a><a href="./" hreflang="es" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#1a1206;background:#E2A23B">ES</a></div>
+<nav><div class="wrap">
+<a class="brand" href="#top"><span class="emoji">🤖</span> inemaccbot</a>
+<span class="sep">|</span>
+<span class="clubpro">
+<a class="inema" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<span class="sep">-</span>
+<a class="pro" href="https://inema.pro" rel="noopener" target="_blank">PRO</a>
+</span>
+<div class="links">
+<a class="sec" href="#oque">Qué es</a>
+<a class="sec" href="#fluxo">Cómo funciona</a>
+<a class="sec" href="#pre">Requisitos previos</a>
+<a class="sec" href="#guia">Guía de uso</a>
+<a class="sec" href="#dominio">Dominio nuevo</a>
+<a class="sec" href="#roadmap">Estado</a>
+<a class="sec" href="arquitetura.html">Arquitectura</a>
+<button aria-label="Cambiar tema" class="tgl" id="themeToggle" title="Cambiar tema">🌙</button>
+<a class="btn" href="https://github.com/inematds/inemaccbot" rel="noopener" target="_blank">GitHub</a>
+</div>
+</div></nav>
+<header class="hero" id="top">
+<div class="glow"></div>
+<div class="wrap">
+<div>
+<span class="chip">Gateway de Telegram · cola duradera</span>
+<h1>Envías una línea por el chat. El <span class="amb">trabajo pesado</span> ocurre automáticamente.</h1>
+<p class="lead">Bot de Telegram con cola duradera en SQLite: ejecuta skills de una etapa y flujos de varias fases con estado, portón humano y reanudación después de una caída.</p>
+<div class="cta">
+<a class="btn" href="#guia">Empezar la guía</a>
+<a class="btn ghost" href="https://github.com/inematds/inemaccbot" rel="noopener" target="_blank">Ver en GitHub</a>
+</div>
+</div>
+<figure><img alt="inemaccbot — gateway Telegram y cola duradera" src="../assets/hero.png"/></figure>
+</div>
+</header>
+<section id="oque"><div class="wrap">
+<span class="chip">Qué es</span>
+<h2>Un operador que no pierde trabajo por el camino</h2>
+<p class="sub">El bot recibe comandos en Telegram, encola el trabajo y lo ejecuta como agente. La cola es duradera: si el proceso se cae a mitad de un renderizado, al volver a iniciarse reclama lo que quedó en vuelo antes de aceptar trabajo nuevo.</p>
+<div class="grid g3">
+<div class="card"><h3>🗄️ Cola duradera de verdad</h3><p>SQLite en WAL, claim atómico, lease con heartbeat y drain al apagarse. Un <code>kill -9</code> en medio de un job no deja el estado indefinido: nada queda <code>running</code> con un lease activo.</p></div>
+<div class="card"><h3>⏸️ Flujos con aprobación humana</h3><p>Pipeline con estado por fase y por objetivo, definición congelada al crearlo, pausa para que hagas tu parte (<code>/aprovar</code>) y reanudación selectiva con <code>/refazer</code>.</p></div>
+<div class="card"><h3>🧩 Nuevo dominio sin código</h3><p>Una skill es un prompt + una entrada en el registry. Un flujo es un repo con <code>flow.json</code> + <code>prompts/</code>. Ninguno de los dos requiere una línea de TypeScript en el bot.</p></div>
+</div>
+</div></section>
+<section id="fluxo"><div class="wrap">
+<span class="chip">Cómo funciona</span>
+<h2>Desde el comando en el chat hasta el archivo entregado</h2>
+<p class="sub">El gateway valida quién habla (allowlist de chat), el comando se convierte en un job en la cola correcta, un worker reclama el job con un lease, el agente lo ejecuta y el notificador devuelve el resultado en el chat.</p>
+<div class="flow">
+<span>comando en Telegram</span><span class="arr">→</span>
+<span>allowlist + parse</span><span class="arr">→</span>
+<span>job en la cola (SQLite)</span><span class="arr">→</span>
+<span>el worker se queja (lease)</span><span class="arr">→</span>
+<span>el agente ejecuta</span><span class="arr">→</span>
+<span>artefacto + aviso en el chat</span>
+</div>
+<div class="grid g3" style="margin-top:28px">
+<div class="card"><h3>Cinco colas, concurrencias diferentes</h3><p><code>io</code> (10) · <code>cpu</code> (1) · <code>texto</code> (2) · <code>render</code> (1) · <code>navegador</code> (1). Un render pesado no bloquea la cola de texto.</p></div>
+<div class="card"><h3>Skill × flujo</h3><p>Skill = una etapa, sin estado: es aceptable empezar de cero. Flujo = varias fases con estado, cuando sería absurdo descartar el trabajo parcial.</p></div>
+<div class="card"><h3>Inicio en orden</h3><p>Migrations → raíz de medios → recuperación de leases vencidos → solo entonces workers y bot. Este orden permite recuperar el proceso tras una caída.</p></div>
+</div>
+</div></section>
+<section id="pre"><div class="wrap">
+<span class="chip">Requisitos previos</span>
+<h2>Qué debe estar en su lugar</h2>
+<p class="sub">Node con TypeScript, un bot creado en Telegram y un <code>.env</code> con las cinco variables obligatorias. Si falta alguna, el arranque falla de forma clara y temprana, antes de iniciar cualquier worker.</p>
+<div class="grid g3">
+<div class="card"><h3>Node + dependencias</h3><p>Instala y ejecuta las pruebas antes de subir cualquier cosa.</p><pre><span class="c"># en la raíz del repo</span>
+<span class="k">npm install</span>
+<span class="k">npm test</span></pre></div>
+<div class="card"><h3>Bot en Telegram</h3><p>Crea el bot en <code>@BotFather</code> y guarda el token. El valor real nunca va al git.</p><pre><span class="c"># .env (modo 600, fuera de git)</span>
+BOT_TOKEN=<span class="s">…</span>
+ALLOWED_CHAT_IDS=<span class="s">123,456</span></pre></div>
+<div class="card"><h3>Estado en disco</h3><p>La ruta de la base de datos de la cola, la raíz del estado y el archivo de registro — las otras tres obligatorias.</p><pre>QUEUE_DB=<span class="s">./inemaccbot.db</span>
+STATE_DIR=<span class="s">./estado</span>
+LOG_FILE=<span class="s">./inemaccbot.log</span></pre></div>
+</div>
+</div></section>
+<section id="guia"><div class="wrap">
+<span class="chip">Guía de uso · paso a paso</span>
+<h2>Iniciar el servicio y operarlo desde el chat</h2>
+<p class="sub">Todos los comandos de abajo son reales: los de shell se ejecutan en el repo, los que empiezan con barra los escribes en Telegram.</p>
+<div class="step"><div class="b">1</div><div>
+<h3>Instala, prueba y compila</h3>
+<p>El registry de skills y flujos se valida al iniciar: una entrada inválida hace que el servicio se detenga a propósito.</p>
+<pre><span class="k">npm install</span>
+<span class="k">npm test</span>          <span class="c"># vitest run</span>
+<span class="k">npm run typecheck</span>  <span class="c"># tsc --noEmit</span>
+<span class="k">npm run build</span>      <span class="c"># tsc -&gt; dist/index.js</span></pre>
+</div></div>
+<div class="step"><div class="b">2</div><div>
+<h3>Inicia el proceso</h3>
+<p>En producción mediante systemd, con el <code>.env</code> en el mismo directorio de trabajo (<code>deploy/inemaccbot.service</code>).</p>
+<pre><span class="k">node dist/index.js</span>                       <span class="c"># directo</span>
+<span class="k">systemctl --user start inemaccbot</span>       <span class="c"># como servicio</span></pre>
+</div></div>
+<div class="step"><div class="b">3</div><div>
+<h3>Confirma que estás activo</h3>
+<p>En el chat autorizado. <code>/ajuda</code> lista todo; <code>/skills</code> e <code>/fluxos</code> son los dos catálogos.</p>
+<pre><span class="k">/ping</span>
+<span class="k">/ajuda</span>
+<span class="k">/skills</span>   <span class="c"># una etapa, sin estado</span>
+<span class="k">/fluxos</span>   <span class="c"># varias fases, con estado</span></pre>
+</div></div>
+<div class="step"><div class="b">4</div><div>
+<h3>Ejecuta una skill</h3>
+<p>El formato es <code>&lt;skill&gt;: &lt;entrada&gt; [| campo]*</code>. Campos genéricos: <code>livesN</code> (destino), <code>modelo=haiku</code>, <code>esforco=high</code>.</p>
+<pre><span class="k">transcrever: https://…</span>                  <span class="c"># audio → texto</span>
+<span class="k">explicativo: &lt;assunto&gt; | vertical</span>       <span class="c"># video 9:16</span>
+<span class="k">imagem: uma raposa ruiva na neve | ratio=16:9</span></pre>
+</div></div>
+<div class="step"><div class="b">5</div><div>
+<h3>Ejecuta un flujo: primero siempre en modo sombra</h3>
+<p><code>| sombra</code> imprime fase × objetivo × cola × tarea y <strong>no pone nada en cola</strong>. Es la forma barata de descubrir que ibas a enviar por error a 12 públicos.</p>
+<pre><span class="k">/promoavatar &lt;assunto&gt; | sombra</span>
+<span class="k">/promoavatar &lt;assunto&gt; --alvo=jovens</span>
+<span class="k">/promoavatar &lt;assunto&gt; | alvos=mulheres | legenda</span></pre>
+</div></div>
+<div class="step"><div class="b">6</div><div>
+<h3>Sigue y libera el portón</h3>
+<p><code>/status</code> es el panel de los flujos ABIERTOS; <code>/completos</code> lista los que terminaron. <code>A#9</code>, <code>a#9</code>, <code>A9</code> e <code>a9</code> son lo mismo — solo números (<code>13</code>) siempre es job.</p>
+<pre><span class="k">/status</span>            <span class="c"># flujos abiertos</span>
+<span class="k">/status A#9</span>        <span class="c"># detalle fase × objetivo</span>
+<span class="k">/fila</span>              <span class="c"># en ejecución, pendientes, errores en 24h</span>
+<span class="k">/pronto A#9</span>        <span class="c"># = /aprovar — abre la puerta</span></pre>
+</div></div>
+<div class="step"><div class="b">7</div><div>
+<h3>Corrige lo que falló, sin rehacerlo todo</h3>
+<p><code>/refazer</code> en un flujo, retoma desde la fase que falló; en un objetivo único, vuelve a procesar ese objetivo. <code>/cancelar</code> quita de la lista sin borrar nada de lo que ya se creó fuera.</p>
+<pre><span class="k">/refazer A#9 mulheres</span>   <span class="c"># solo el público que falló</span>
+<span class="k">/cancelar A#9</span>           <span class="c"># desaparece de /status; el flujo sigue existiendo</span>
+<span class="k">/furar j13</span>              <span class="c"># pone un job pendiente al frente</span></pre>
+</div></div>
+<div class="step"><div class="b">8</div><div>
+<h3>Libera espacio con una simulación en seco</h3>
+<p>Sin la palabra <code>confirmar</code> al final, solo muestra lo que saldría y cuánto libera. El bot solo toca lo que ÉL publicó dentro de <code>~/projetos/output</code>.</p>
+<pre><span class="k">/espaco</span>                  <span class="c"># disco por área (bot × skills)</span>
+<span class="k">/limpar A#8</span>              <span class="c"># dry-run</span>
+<span class="k">/limpar A#8 confirmar</span>    <span class="c"># ejecuta</span></pre>
+</div></div>
+<div class="step"><div class="b">9</div><div>
+<h3>Antes de reiniciar, revisa la cola</h3>
+<p><code>claude saiu com código 143</code> é <code>128 + 15</code> = SIGTERM: el job fue terminado por un reinicio del servicio, no por un error del agente. Un render de reel tarda 10–15 min — dos reinicios seguidos agotan los dos intentos del mismo job.</p>
+<pre><span class="k">sqlite3 inemaccbot.db</span> \
+  <span class="s">"select id,fila,tarefa,status,flow_ref from jobs
+   where status in ('queued','running');"</span>
+<span class="c"># vacío → reinicia cuando quieras. Con un render en curso → espera.</span></pre>
+</div></div>
+</div></section>
+<section id="dominio"><div class="wrap">
+<span class="chip">Dominio nuevo</span>
+<h2>Agregar trabajo sin tocar el bot</h2>
+<p class="sub">Esta es la prueba del diseño: un dominio nuevo no debe exigir líneas de código en el bot. Elige entre skill y flujo según el criterio del trabajo parcial.</p>
+<div class="grid g2">
+<div class="card">
+<h3>Una SKILL — una etapa, sin estado</h3>
+<p>Aplica cuando «volver a ejecutarlo desde cero» es aceptable. Escribe el prompt, decláralo en el registry y ejecuta las pruebas. Los campos declarados deben usarse en el prompt, y las variables del prompt deben declararse; hay pruebas para ambos casos.</p>
+<pre><span class="c"># 1. prompts/minhaskill.md — usa {{input}} y {{saida}},</span>
+<span class="c"># y la última línea del agente es RESULT: &lt;caminho&gt;</span>
+<span class="c"># 2. config/skills.json</span>
+{ <span class="s">"command"</span>: <span class="s">"minhaskill"</span>, <span class="s">"fila"</span>: <span class="s">"texto"</span>, <span class="s">"kind"</span>: <span class="s">"agent"</span>,
+  <span class="s">"prompt"</span>: <span class="s">"prompts/minhaskill.md"</span>, <span class="s">"artefato_exts"</span>: [<span class="s">"txt"</span>],
+  <span class="s">"max_tentativas"</span>: 2, <span class="s">"timeout_segundos"</span>: 3600 }
+<span class="c"># 3.</span> <span class="k">npm test</span></pre>
+</div>
+<div class="card">
+<h3>Un FLUJO: varias fases, con estado</h3>
+<p>Aplica cuando hay trabajo parcial que sería absurdo descartar. Gana <code>/status</code>, <code>/refazer</code> selectivo, reanudación y definición congelada. El dominio dice PARA QUIÉN; el bot sabe DÓNDE — nunca pongas la ruta en <code>flow.json</code>.</p>
+<pre><span class="c"># 1. repo ~/projetos/&lt;nome&gt; con flow.json + prompts/</span>
+<span class="c"># 2. flow.json: nombre, prefijo (la P de P#16), versao_def,</span>
+<span class="c"># objetivos y fases (id, alcance, cola, tipo, tarea…)</span>
+<span class="c"># 3. config/fluxos.json: { command, repo, descricao, exemplo }</span>
+<span class="c"># 4. comprueba sin gastar nada:</span>
+<span class="k">/&lt;fluxo&gt; &lt;assunto&gt; | sombra</span></pre>
+</div>
+</div>
+<p class="sub" style="margin-top:22px">Todo dominio que entra en el catálogo <strong>responde ayuda</strong> — no por disciplina, sino por diseño: quien entiende, escribe (<code>HELP.md</code> en el flujo, <code>&lt;prompt&gt;.help.md</code> en la skill) y, si no se escribió, la ayuda se deriva del mismo registro que el bot usa para ejecutar. Una prueba recorre ambos catálogos y falla si algún dominio no responde con ayuda utilizable.</p>
+<div class="flow">
+<span>promoavatar (A#)</span><span class="arr">·</span>
+<span>promoavatar3 (C#)</span>
+</div>
+</div></section>
+<section id="roadmap"><div class="wrap">
+<span class="chip">Estado</span>
+<h2>Qué está listo y qué no existe a propósito</h2>
+<p class="sub">Etapas 0 a 5 completadas, más los flujos de dominio. La v1 (<code>inemaccvbot</code>, <code>mkivideos</code>, <code>mkitexto</code>) está desactivado.</p>
+<div class="phase"><div class="tag">Listo</div><div class="d"><strong>Cola duradera</strong><span>SQLite en WAL, lease con heartbeat, drain, claim atómico, recuperación al iniciar.</span></div></div>
+<div class="phase"><div class="tag">Listo</div><div class="d"><strong>Gateway de Telegram</strong><span>Lista de permitidos del chat, análisis puro de comandos (sin grammy), límite de mensajes y notificación cuando termina un job.</span></div></div>
+<div class="phase"><div class="tag">Listo</div><div class="d"><strong>Skills como agente</strong><span>transcribir · doblar · explicativo · curso · demo · reel · reelinematds · historia · imagen.</span></div></div>
+<div class="phase"><div class="tag">Listo</div><div class="d"><strong>Motor de flujos</strong><span>Estado por fase y objetivo, definición congelada, puerta de control humana y reanudación.</span></div></div>
+<div class="phase"><div class="tag">Abierto</div><div class="d"><strong>Salir de Telegram</strong><span>WhatsApp, correo electrónico o chatbot: la integración del gateway ya existe; lo que bloquea es <code>chat_id</code> ser <code>INTEGER</code>. Recomendación en análisis: no reemplazar, agregar.</span></div></div>
+<div class="phase"><div class="tag">Abierto</div><div class="d"><strong>Imagen y enlace como material</strong><span>Aceptar imágenes y enlaces como entrada de un flujo — análisis escrito, decisión no tomada.</span></div></div>
+<div class="phase"><div class="tag">Afuera</div><div class="d"><strong>Qué no existe a propósito</strong><span>Barrera entre fases, preempción de jobs, límite global de agentes, multiusuario — cada uno con el detonante documentado para reconsiderarlo.</span></div></div>
+</div></section>
+<footer>
+<div class="wrap">
+<div class="pill">TypeScript</div><div class="pill">SQLite (WAL)</div><div class="pill">grammY</div><div class="pill">vitest</div><div class="pill">systemd</div>
+<p style="margin-top:18px">inemaccbot · gateway Telegram + cola duradera ·
+      <a href="https://github.com/inematds/inemaccbot">inematds/inemaccbot</a> ·
+      <a href="https://inema.club">INEMA.CLUB</a></p>
+</div>
+</footer>
+<script>
+  (function(){
+    var KEY='inemaccbot-theme';
+    var b=document.body, t=document.getElementById('themeToggle');
+    if(localStorage.getItem(KEY)==='light'){ b.classList.add('light'); t.textContent='☀️'; }
+    t.addEventListener('click',function(){
+      var light=b.classList.toggle('light');
+      t.textContent=light?'☀️':'🌙';
+      localStorage.setItem(KEY, light?'light':'dark');
+    });
+  })();
+</script>
+</body>
+</html>

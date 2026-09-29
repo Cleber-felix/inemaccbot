@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Arquitectura — inemaccbot, promoavatar y promoavatar3</title>
+<meta content="Diagramas de flujo de inemaccbot y de los dos dominios (promoavatar, promoavatar3): las cinco capas, los archivos de configuración y dónde cambiar cada cosa." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0c0c10; --bg2:#14141b; --card:#16161e; --line:#272730;
+    --txt:#e9e9ee; --mut:#9a9aa6; --amb:#E2A23B; --amb2:#f0c070; --sky:#38bdf8; --pro:#cbd5e1;
+    color-scheme:dark;
+  }
+  body.light{
+    --bg:#f6f7f9; --bg2:#eceef2; --card:#ffffff; --line:#e1e3ea;
+    --txt:#1a1a22; --mut:#5b5b68; --amb:#b9791d; --amb2:#a16207; --sky:#0369a1; --pro:#b45309;
+    color-scheme:light;
+  }
+  body.light .hero .glow{opacity:.5}
+  body.light pre{background:#0e0e14;color:#d6d6e0}
+  body.light pre .c{color:#8a8a98}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.65 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:Sora,sans-serif;line-height:1.15;margin:0}
+  a{color:var(--amb);text-decoration:none}
+  code,pre{font-family:"JetBrains Mono",monospace}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+  .mut{color:var(--mut)} .amb{color:var(--amb)}
+  .chip{display:inline-block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amb);font-weight:600;font-family:Sora}
+  nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(12,12,16,.78);border-bottom:1px solid var(--line)}
+  body.light nav{background:rgba(246,247,249,.86)}
+  nav .wrap{display:flex;align-items:center;gap:22px;height:60px}
+  nav .brand{display:flex;align-items:center;gap:8px;font-family:Sora;font-weight:800;letter-spacing:-.02em;color:var(--amb)}
+  nav .brand .emoji{font-size:1.25rem}
+  nav .sep{color:var(--mut);opacity:.45}
+  nav .inema{color:var(--sky);font-weight:600;font-size:.88rem;font-family:Sora}
+  nav .inema:hover{filter:brightness(1.15)}
+  nav .pro{color:var(--pro);font-weight:600;font-size:.88rem;font-family:Sora}
+  nav .pro:hover{filter:brightness(1.15)}
+  nav .clubpro{display:inline-flex;align-items:center;gap:6px}
+  nav .links{margin-left:auto;display:flex;align-items:center;gap:18px;font-size:.92rem}
+  nav .links a.sec{color:var(--mut)} nav .links a.sec:hover{color:var(--txt)}
+  .tgl{background:var(--bg2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem}
+  .tgl:hover{border-color:var(--amb)}
+  .btn{display:inline-block;background:var(--amb);color:#1a1206;font-weight:600;padding:.6em 1.05em;border-radius:10px;font-family:Sora}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  @media(max-width:980px){nav .links a.sec{display:none}}
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero .glow{position:absolute;inset:-40% -20% auto auto;width:70%;height:600px;background:radial-gradient(closest-side,rgba(226,162,59,.22),transparent 70%);pointer-events:none}
+  .hero .wrap{padding:64px 22px 56px;max-width:900px}
+  .hero h1{font-size:clamp(2rem,4.6vw,3.2rem);font-weight:800;letter-spacing:-.025em}
+  .hero p.lead{font-size:1.14rem;color:var(--mut);margin:1.1em 0 1.6em;max-width:62ch}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+  section{padding:58px 0;border-bottom:1px solid var(--line)}
+  section h2{font-size:clamp(1.45rem,3.2vw,2rem);font-weight:800;letter-spacing:-.02em}
+  section h3.sub3{font-size:1.1rem;margin:2.2em 0 .6em}
+  section .sub{color:var(--mut);margin:.6em 0 2em;max-width:70ch}
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3{grid-template-columns:1fr 1fr}}
+  @media(max-width:540px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card h3{font-size:1.03rem;margin-bottom:.4em}
+  .card p{color:var(--mut);font-size:.92rem;margin:0}
+  .card p+p{margin-top:.6em}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .flow span{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:.45em .9em;font-size:.85rem;font-family:Sora;font-weight:600}
+  .flow .arr{color:var(--amb);border:none;background:none;padding:0 .1em}
+  pre{background:#0a0a0e;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;font-size:.84rem;line-height:1.6;color:#d6d6e0}
+  pre .c{color:#6f6f7c} pre .k{color:var(--amb2)} pre .s{color:#9ece6a}
+  .dg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;overflow-x:auto;margin:.4em 0 1.2em}
+  .dg svg{width:100%;min-width:860px;height:auto;display:block}
+  .dg figcaption{color:var(--mut);font-size:.86rem;margin-top:10px;padding:0 4px}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;margin:.4em 0 1em}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:Sora;font-weight:600;color:var(--amb);font-size:.82rem;letter-spacing:.03em;text-transform:uppercase}
+  td code{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:.1em .4em;font-size:.86em}
+  .tw{overflow-x:auto}
+  .note{border-left:3px solid var(--amb);background:var(--bg2);border-radius:0 10px 10px 0;padding:14px 18px;margin:1.2em 0;color:var(--mut);font-size:.93rem}
+  .note strong{color:var(--txt)}
+  footer{padding:46px 0;text-align:center;color:var(--mut);font-size:.9rem}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.3em .8em;font-size:.78rem;color:var(--mut);margin:0 4px 6px}
+</style>
+<link href="https://inematds.github.io/inemaccbot/guia/arquitetura.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/inemaccbot/guia/en/arquitetura.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/inemaccbot/guia/es/arquitetura.html" hreflang="es" rel="alternate"/></head>
+<body><div class="inema-lang" style="position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:2px;padding:4px;border-radius:10px;background:rgba(12,12,16,.82);border:1px solid rgba(226,162,59,.45);font:600 12px/1 Sora,Inter,system-ui,sans-serif;backdrop-filter:blur(8px)" translate="no"><a href="../arquitetura.html" hreflang="pt-BR" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">PT</a><a href="../en/arquitetura.html" hreflang="en" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">EN</a><a href="arquitetura.html" hreflang="es" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#1a1206;background:#E2A23B">ES</a></div>
+<nav><div class="wrap">
+<a class="brand" href="#top"><span class="emoji">🗺️</span> inemaccbot</a>
+<span class="sep">|</span>
+<span class="clubpro">
+<a class="inema" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<span class="sep">-</span>
+<a class="pro" href="https://inema.pro" rel="noopener" target="_blank">PRO</a>
+</span>
+<div class="links">
+<a class="sec" href="#visao">Vista general</a>
+<a class="sec" href="#config">Configuración</a>
+<a class="sec" href="#anatomia">Anatomía del flujo</a>
+<a class="sec" href="#promoavatar">promoavatar</a>
+<a class="sec" href="#promoavatar3">promoavatar3</a>
+<a class="sec" href="#reel">Motor del reel</a>
+<a class="sec" href="#alterar">Dónde cambiar</a>
+<button aria-label="Cambiar tema" class="tgl" id="themeToggle" title="Cambiar tema">🌙</button>
+<a class="btn" href="https://github.com/inematds/inemaccbot" rel="noopener" target="_blank">GitHub</a>
+</div>
+</div></nav>
+<header class="hero" id="top">
+<div class="glow"></div>
+<div class="wrap">
+<span class="chip">Mapa del sistema · tres repos</span>
+<h1>Cómo funciona el sistema — y <span class="amb">dónde se modifica</span> en cada cosa.</h1>
+<p class="lead">Un bot (<code>inemaccbot</code>) que no sabe nada sobre video, y dos dominios (<code>promoavatar</code>, <code>promoavatar3</code>) que no saben nada sobre colas. Esta página muestra el diagrama de cada uno, el mapa de los archivos de configuración y la tabla de «quiero cambiar X, ¿dónde lo modifico?».</p>
+<div class="cta">
+<a class="btn" href="#visao">Ver los diagramas</a>
+<a class="btn ghost" href="index.html">Guía de uso</a>
+</div>
+</div>
+</header>
+<!-- ============================ VISÃO GERAL ============================ -->
+<section id="visao"><div class="wrap">
+<span class="chip">1 · Visión general</span>
+<h2>Cinco capas, una regla</h2>
+<p class="sub">La regla que sostiene el diseño está escrita en la parte superior del <code>src/fluxos/runtime.ts</code>: <strong>quien orquesta no trabaja; quien trabaja no decide.</strong> El worker ejecuta un job y lo marca <code>done</code>/<code>failed</code>; quien lee esto y elige la siguiente fase es el runtime — y lo hace dentro de la misma transacción del ack, para que «fase completada» y «siguiente fase encolada» nunca existan por separado.</p>
+<figure class="dg">
+<svg aria-label="Diagrama de las cinco capas de inemaccbot" role="img" viewbox="0 0 1080 592">
+<defs>
+<marker id="a1" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--amb)"></path>
+</marker>
+</defs>
+<style>
+        .bd{fill:var(--bg2);stroke:var(--line);stroke-width:1;opacity:.55}
+        .bx{fill:var(--card);stroke:var(--line);stroke-width:1}
+        .bxa{fill:var(--card);stroke:var(--amb);stroke-width:1.4}
+        .lb{font:600 11px Sora,sans-serif;fill:var(--mut);letter-spacing:.12em}
+        .t{font:600 12.5px Sora,sans-serif;fill:var(--txt)}
+        .ta{font:600 12.5px Sora,sans-serif;fill:var(--amb)}
+        .s{font:10.5px Inter,sans-serif;fill:var(--mut)}
+        .ar{stroke:var(--amb);stroke-width:1.6;fill:none;marker-end:url(#a1)}
+      </style>
+<!-- bands -->
+<rect class="bd" height="64" rx="10" width="970" x="90" y="20"></rect>
+<rect class="bd" height="112" rx="10" width="970" x="90" y="96"></rect>
+<rect class="bd" height="112" rx="10" width="970" x="90" y="220"></rect>
+<rect class="bd" height="126" rx="10" width="970" x="90" y="344"></rect>
+<rect class="bd" height="80" rx="10" width="970" x="90" y="482"></rect>
+<text class="lb" x="12" y="56">CHAT</text>
+<text class="lb" x="12" y="156">GATEWAY</text>
+<text class="lb" x="12" y="280">COLA</text>
+<text class="lb" x="12" y="412">EJECUCIÓN</text>
+<text class="lb" x="12" y="527">ENTREGA</text>
+<!-- chat -->
+<rect class="bxa" height="40" rx="8" width="210" x="110" y="32"></rect>
+<text class="ta" x="126" y="49">Telegram</text>
+<text class="s" x="126" y="64">gateway/telegram.ts · long polling</text>
+<text class="s" x="342" y="49">Un chat vinculado (ALLOWED_CHAT_IDS).</text>
+<text class="s" x="342" y="64">Toda entrada del sistema pasa por aquí.</text>
+<!-- gateway -->
+<rect class="bx" height="40" rx="8" width="772" x="110" y="106"></rect>
+<text class="t" x="126" y="123">gateway/mensagem.ts — el enrutador</text>
+<text class="s" x="126" y="138">clasifica el mensaje en cuatro rutas y devuelve una respuesta en segundos (aquí no se hace ningún trabajo pesado)</text>
+<rect class="bx" height="42" rx="8" width="185" x="110" y="156"></rect>
+<text class="t" x="122" y="173">comandos.ts</text>
+<text class="s" x="122" y="189">/fila /status /espaco /ping</text>
+<rect class="bx" height="42" rx="8" width="185" x="306" y="156"></rect>
+<text class="t" x="318" y="173">gramatica.ts</text>
+<text class="s" x="318" y="189">skill: entrada | campos</text>
+<rect class="bx" height="42" rx="8" width="185" x="502" y="156"></rect>
+<text class="t" x="514" y="173">interpret.ts</text>
+<text class="s" x="514" y="189">texto libre → agente corto</text>
+<rect class="bxa" height="42" rx="8" width="185" x="698" y="156"></rect>
+<text class="ta" x="710" y="173">comandos-flujo.ts</text>
+<text class="s" x="710" y="189">/promoavatar3 · /aprovar</text>
+<text class="s" x="900" y="176">El interpret valida contra</text>
+<text class="s" x="900" y="191">el registry: catálogo cerrado.</text>
+<!-- fila -->
+<rect class="bxa" height="46" rx="8" width="772" x="110" y="230"></rect>
+<text class="ta" x="126" y="248">fila/store.ts — SQLite en WAL, una cola duradera</text>
+<text class="s" x="126" y="264">jobs: queued → running → done | failed | canceled · lease con heartbeat · claim atómico · reanudación después de una caída</text>
+<rect class="bx" height="32" rx="8" width="140" x="118" y="288"></rect>
+<text class="t" x="130" y="308">render · 1</text>
+<rect class="bx" height="32" rx="8" width="140" x="270" y="288"></rect>
+<text class="t" x="282" y="308">navegador · 1</text>
+<rect class="bx" height="32" rx="8" width="140" x="422" y="288"></rect>
+<text class="t" x="434" y="308">texto · 2</text>
+<rect class="bx" height="32" rx="8" width="140" x="574" y="288"></rect>
+<text class="t" x="586" y="308">io · 10</text>
+<rect class="bx" height="32" rx="8" width="140" x="726" y="288"></rect>
+<text class="t" x="738" y="308">cpu · 1</text>
+<text class="s" x="880" y="308">fila/filas.ts · CONCORRENCIAS</text>
+<!-- execução -->
+<rect class="bx" height="44" rx="8" width="150" x="110" y="356"></rect>
+<text class="t" x="122" y="374">worker.ts</text>
+<text class="s" x="122" y="390">uno por fila</text>
+<rect class="bx" height="44" rx="8" width="290" x="286" y="356"></rect>
+<text class="t" x="298" y="374">kind: agent</text>
+<text class="s" x="298" y="390">runner-claude.ts · runner-chrome.ts</text>
+<rect class="bx" height="44" rx="8" width="290" x="592" y="356"></rect>
+<text class="t" x="604" y="374">kind: function</text>
+<text class="s" x="604" y="390">fila/tarefas/* — sin modelo, sin prompt</text>
+<rect class="bx" height="42" rx="8" width="596" x="286" y="414"></rect>
+<text class="s" x="298" y="431">heygen.gerar · heygen.gerar-creditos · heygen.baixar · heygen.estudio</text>
+<text class="s" x="298" y="447">reel.montar · ffmpeg.thumb · http.get     (registradas en fila/tarefas/index.ts)</text>
+<rect class="bxa" height="100" rx="8" width="160" x="900" y="356"></rect>
+<text class="ta" x="912" y="376">fluxos/</text>
+<text class="ta" x="912" y="392">runtime.ts</text>
+<text class="s" x="912" y="412">lee el ack del job y</text>
+<text class="s" x="912" y="426">pone en cola el siguiente</text>
+<text class="s" x="912" y="440">fase en la MISMA</text>
+<text class="s" x="912" y="454">transacción</text>
+<!-- entrega -->
+<rect class="bx" height="44" rx="8" width="200" x="110" y="494"></rect>
+<text class="t" x="122" y="512">state/artefatos/</text>
+<text class="s" x="122" y="528">fuente canónica del bot</text>
+<rect class="bx" height="44" rx="8" width="190" x="330" y="494"></rect>
+<text class="t" x="342" y="512">publicar.ts</text>
+<text class="s" x="342" y="528">renombra según el título</text>
+<rect class="bx" height="44" rx="8" width="280" x="540" y="494"></rect>
+<text class="t" x="552" y="512">destinos.ts</text>
+<text class="s" x="552" y="528">livesN → yt-pub-livesN/imports/videos</text>
+<rect class="bx" height="44" rx="8" width="200" x="840" y="494"></rect>
+<text class="t" x="852" y="512">notificar.ts</text>
+<text class="s" x="852" y="528">avisa en el chat</text>
+<!-- arrows -->
+<path class="ar" d="M215,72 L215,102"></path>
+<path class="ar" d="M215,198 L215,226"></path>
+<path class="ar" d="M215,320 L215,352"></path>
+<path class="ar" d="M215,456 L215,490"></path>
+<path class="ar" d="M262,378 L282,378"></path>
+<path class="ar" d="M578,378 L588,378"></path>
+<path class="ar" d="M312,516 L326,516"></path>
+<path class="ar" d="M522,516 L536,516"></path>
+<path class="ar" d="M822,516 L836,516"></path>
+</svg>
+<figcaption>El recorrido completo de un mensaje. Los dos recuadros en ámbar son los límites más importantes: el gateway nunca trabaja y el runtime es el único que decide cuál es la siguiente fase.</figcaption>
+</figure>
+<div class="grid g3">
+<div class="card">
+<h3>🚪 Gateway</h3>
+<p>Se mide en segundos. Clasifica el mensaje, lo valida contra el registry y lo pone en cola. Si el agente de <code>interpret</code> si alucina un comando que no existe, la respuesta es rechazarlo: catálogo cerrado.</p>
+</div>
+<div class="card">
+<h3>🗄️ Cola</h3>
+<p>SQLite en WAL. Cinco clases de recursos con concurrencia propia, para que un render no le quite el turno a una descarga. Lease con heartbeat: si el proceso falla, el job vuelve a la cola en vez de desaparecer.</p>
+</div>
+<div class="card">
+<h3>⚙️ Ejecución</h3>
+<p>Dos tipos de trabajo. <code>kind: agent</code> llama a un modelo con un prompt; <code>kind: function</code> es código TypeScript determinista. Hoy solo la fase de texto usa un modelo — avatar y reel son funciones.</p>
+</div>
+</div>
+</div></section>
+<!-- ============================ CONFIGURAÇÃO ============================ -->
+<section id="config"><div class="wrap">
+<span class="chip">2 · Configuración</span>
+<h2>El bot no sabe nada sobre video</h2>
+<p class="sub">Esta es la frontera que permite que el sistema crezca sin volverse pesado. El bot conoce las colas, las puertas de control, los reintentos y la entrega. El dominio conoce los públicos, los prompts, las plantillas y el motor de renderizado. Ambos se conectan en exactamente dos archivos.</p>
+<figure class="dg">
+<svg aria-label="Mapa de los archivos de configuración entre el bot y el dominio" role="img" viewbox="0 0 1080 470">
+<defs>
+<marker id="a2" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--amb)"></path>
+</marker>
+</defs>
+<style>
+        .p{fill:var(--bg2);stroke:var(--line);stroke-width:1;opacity:.55}
+        .f{fill:var(--card);stroke:var(--line);stroke-width:1}
+        .fa{fill:var(--card);stroke:var(--amb);stroke-width:1.4}
+        .h{font:800 13px Sora,sans-serif;fill:var(--txt)}
+        .ha{font:800 13px Sora,sans-serif;fill:var(--amb)}
+        .n{font:600 11.5px "JetBrains Mono",monospace;fill:var(--txt)}
+        .d{font:10.5px Inter,sans-serif;fill:var(--mut)}
+        .ar2{stroke:var(--amb);stroke-width:1.6;fill:none;marker-end:url(#a2)}
+        .lbl{font:600 10px Sora,sans-serif;fill:var(--amb);letter-spacing:.06em}
+      </style>
+<rect class="p" height="430" rx="12" width="500" x="20" y="20"></rect>
+<rect class="p" height="430" rx="12" width="500" x="560" y="20"></rect>
+<text class="h" x="40" y="48">REPO DEL BOT · ~/projetos/inemaccbot</text>
+<text class="d" x="40" y="66">público · TypeScript · no conoce ningún dominio</text>
+<text class="ha" x="580" y="48">REPO DE DOMINIO · ~/projetos/promoavatar3</text>
+<text class="d" x="580" y="66">hermano, no submódulo · JSON + prompts + Python</text>
+<!-- bot files -->
+<rect class="fa" height="52" rx="8" width="460" x="40" y="84"></rect>
+<text class="n" x="54" y="104">config/fluxos.json</text>
+<text class="d" x="54" y="122">registra el comando y dice QUÉ repo cargar · leído en BOOT</text>
+<rect class="f" height="52" rx="8" width="460" x="40" y="146"></rect>
+<text class="n" x="54" y="166">config/skills.json</text>
+<text class="d" x="54" y="184">skills de una etapa (transcribir, explicativo, reel…) · leído en BOOT</text>
+<rect class="f" height="52" rx="8" width="460" x="40" y="208"></rect>
+<text class="n" x="54" y="228">src/dominio/flow.ts</text>
+<text class="d" x="54" y="246">valida el flow.json · congela la definición · resuelve variante y CTA</text>
+<rect class="f" height="52" rx="8" width="460" x="40" y="270"></rect>
+<text class="n" x="54" y="290">src/fila/tarefas/index.ts</text>
+<text class="d" x="54" y="308">catálogo de tareas: lo que `kind: function` puede llamar</text>
+<rect class="f" height="52" rx="8" width="460" x="40" y="332"></rect>
+<text class="n" x="54" y="352">.env</text>
+<text class="d" x="54" y="370">TELEGRAM_TOKEN · ALLOWED_CHAT_IDS · HEYGEN_API_KEY · PROJETOS_DIR</text>
+<rect class="f" height="42" rx="8" width="460" x="40" y="394"></rect>
+<text class="n" x="54" y="414">state/ · inemaccbot.db</text>
+<text class="d" x="54" y="430">cola, estado de los flujos y artefactos — no se edita a mano</text>
+<!-- domain files -->
+<rect class="fa" height="52" rx="8" width="460" x="580" y="84"></rect>
+<text class="n" x="594" y="104">flow.json</text>
+<text class="d" x="594" y="122">objetivos · fases · avatar/voz · templates · cta · motor_repo</text>
+<rect class="f" height="52" rx="8" width="460" x="580" y="146"></rect>
+<text class="n" x="594" y="166">prompts/*.md</text>
+<text class="d" x="594" y="184">lo que escribe la fase de texto · las variantes cambian este archivo</text>
+<rect class="f" height="52" rx="8" width="460" x="580" y="208"></rect>
+<text class="n" x="594" y="228">templates/*.json + templates/mapa.json</text>
+<text class="d" x="594" y="246">layout del reel · y el mapa formato editorial → layout</text>
+<rect class="f" height="52" rx="8" width="460" x="580" y="270"></rect>
+<text class="n" x="594" y="290">scripts/ (preparar.py · montar.py · montar-reel.py)</text>
+<text class="d" x="594" y="308">el MOTOR de render: puede compartirse mediante motor_repo</text>
+<rect class="f" height="52" rx="8" width="460" x="580" y="332"></rect>
+<text class="n" x="594" y="352">cta/*.mp4</text>
+<text class="d" x="594" y="370">clip de cierre, elegido según la variante</text>
+<rect class="f" height="42" rx="8" width="460" x="580" y="394"></rect>
+<text class="n" x="594" y="414">HELP.md · textos/</text>
+<text class="d" x="594" y="430">ayuda en dos capas y la salida de la fase de texto</text>
+<!-- link arrows -->
+<path class="ar2" d="M502,110 L576,110"></path>
+<text class="lbl" x="506" y="102">repo:</text>
+<path class="ar2" d="M576,240 L506,240" style="marker-end:url(#a2)"></path>
+<text class="lbl" x="512" y="232">valida</text>
+</svg>
+<figcaption>Solo dos flechas cruzan la frontera. <code>config/fluxos.json</code> indica qué carpeta cargar; el <code>flow.ts</code> valida el <code>flow.json</code> que vino de allí y rechaza lo que esté malformado antes de que exista cualquier job.</figcaption>
+</figure>
+<div class="note">
+<strong>Regla de oro para quien vaya a montar otro sistema así:</strong> el dominio referencia el canal por NOMBRE (<code>lives2</code>), nunca por ruta. El bot es el único que sabe dónde está eso en el disco, en un solo lugar (<code>src/dominio/destinos.ts</code>). Un canal nuevo aparece con solo crear la carpeta <code>yt-pub-livesN</code> — sin editar ni recompilar el bot.
+  </div>
+<h3 class="sub3">Cuando se lee el archivo</h3>
+<div class="tw"><table>
+<tr><th>Archivo</th><th>Se lee cuando</th><th>¿Hay que reiniciar?</th></tr>
+<tr><td><code>config/fluxos.json</code></td><td>al arrancar el proceso</td><td><strong>Sí</strong> — y comprueba que la cola esté vacía antes: restart mata los renders en curso</td></tr>
+<tr><td><code>config/skills.json</code></td><td>al arrancar el proceso</td><td><strong>Sí</strong></td></tr>
+<tr><td><code>flow.json</code> del dominio</td><td>al crear cada flujo</td><td>No</td></tr>
+<tr><td><code>prompts/*.md</code> del dominio</td><td>al crear — el texto es <em>congelado</em> dentro del flujo</td><td>No (pero un flujo ya creado mantiene el texto anterior)</td></tr>
+<tr><td><code>templates/*.json</code></td><td>al momento del render, por medio de <code>preparar.py</code></td><td>No</td></tr>
+<tr><td><code>.env</code></td><td>al arrancar</td><td><strong>Sí</strong></td></tr>
+</table></div>
+</div></section>
+<!-- ============================ ANATOMIA ============================ -->
+<section id="anatomia"><div class="wrap">
+<span class="chip">3 · Anatomía</span>
+<h2>Qué ocurre entre el comando y el primer job</h2>
+<p class="sub">Un flujo no es un script que se ejecuta de principio a fin. Es una definición que <em>congelada</em> al crear y luego avanza fase a fase, con el estado en la base de datos. Esto es lo que permite reiniciar el proceso a mitad de camino y continuar desde donde se quedó.</p>
+<figure class="dg">
+<svg aria-label="Anatomía de un flujo: creación, congelación, alcance y portón" role="img" viewbox="0 0 1080 430">
+<defs>
+<marker id="a3" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--amb)"></path>
+</marker>
+</defs>
+<style>
+        .b{fill:var(--card);stroke:var(--line);stroke-width:1}
+        .ba{fill:var(--card);stroke:var(--amb);stroke-width:1.4}
+        .zz{fill:var(--bg2);stroke:var(--line);stroke-width:1;opacity:.55}
+        .tt{font:600 12.5px Sora,sans-serif;fill:var(--txt)}
+        .tta{font:600 12.5px Sora,sans-serif;fill:var(--amb)}
+        .ss{font:10.5px Inter,sans-serif;fill:var(--mut)}
+        .mn{font:600 11px "JetBrains Mono",monospace;fill:var(--txt)}
+        .ar3{stroke:var(--amb);stroke-width:1.6;fill:none;marker-end:url(#a3)}
+      </style>
+<rect class="ba" height="52" rx="8" width="228" x="20" y="26"></rect>
+<text class="mn" x="34" y="48">/promoavatar3 &lt;assunto&gt;</text>
+<text class="ss" x="34" y="66">| alvos=… | prompt=… | estudio</text>
+<rect class="b" height="52" rx="8" width="212" x="286" y="26"></rect>
+<text class="tt" x="300" y="48">crearFlujo</text>
+<text class="ss" x="300" y="66">valida el flow.json · rechaza pronto</text>
+<rect class="b" height="52" rx="8" width="212" x="536" y="26"></rect>
+<text class="tt" x="550" y="48">comVariante()</text>
+<text class="ss" x="550" y="66">cambia el prompt de la fase</text>
+<rect class="ba" height="52" rx="8" width="254" x="786" y="26"></rect>
+<text class="tta" x="800" y="48">congelar()</text>
+<text class="ss" x="800" y="66">incrusta el TEXTO de los prompts en la definición</text>
+<path class="ar3" d="M250,52 L282,52"></path>
+<path class="ar3" d="M500,52 L532,52"></path>
+<path class="ar3" d="M750,52 L782,52"></path>
+<text class="ss" x="20" y="102">A partir de la congelación, el flujo ya no depende del disco del dominio: editar el prompt hoy no cambia un flujo creado ayer, y el <tspan class="mn">/refazer</tspan> reutiliza la misma definición.</text>
+<rect class="b" height="44" rx="8" width="1020" x="20" y="120"></rect>
+<text class="tt" x="34" y="140">definicaoEfetiva — filtra las fases opcionales</text>
+<text class="mn" x="34" y="157">fases.filter(f =&gt; !f.opcional || opcoes[f.opcional])</text>
+<text class="ss" x="470" y="157">una fase marcada como opcional solo entra cuando se solicita el flag (| api, | estudio, | creditos)</text>
+<rect class="zz" height="130" rx="10" width="500" x="20" y="184"></rect>
+<text class="tta" x="38" y="208">escopo: "fluxo"</text>
+<text class="ss" x="38" y="226">UN job para todo el flujo.</text>
+<text class="ss" x="38" y="242">El prompt recibe {{publicos}} con TODOS los objetivos</text>
+<text class="ss" x="38" y="258">y guarda un archivo por objetivo en textos/.</text>
+<rect class="b" height="30" rx="7" width="180" x="38" y="270"></rect>
+<text class="tt" x="52" y="290">1 llamada al modelo</text>
+<text class="ss" x="232" y="290">es lo que mantiene bajo el costo</text>
+<rect class="zz" height="130" rx="10" width="480" x="560" y="184"></rect>
+<text class="tta" x="578" y="208">escopo: "alvo"</text>
+<text class="ss" x="578" y="226">UN job POR objetivo — 12 en promoavatar,</text>
+<text class="ss" x="578" y="242">hasta 36 en promoavatar3.</text>
+<text class="ss" x="578" y="258">Cada uno falla, vuelve a intentarlo y se cancela por separado.</text>
+<rect class="b" height="30" rx="7" width="180" x="578" y="270"></rect>
+<text class="tt" x="592" y="290">N jobs paralelos</text>
+<text class="ss" x="772" y="290">limitados por la concurrencia de la cola</text>
+<rect class="ba" height="74" rx="10" width="1020" x="20" y="336"></rect>
+<text class="tta" x="38" y="360">pausa_apos: true — la puerta humana</text>
+<text class="ss" x="38" y="380">Cuando terminan TODOS los jobs de la fase, el flujo se detiene y envía el resultado al chat: los guiones completos cuando la fase es de alcance "flujo", solo la lista cuando es de alcance "objetivo".</text>
+<text class="mn" x="38" y="400">Solo se desbloquea con  /aprovar C#23   ·   idempotente: aprobar dos veces no duplica el job</text>
+</svg>
+<figcaption>Los cuatro conceptos que explican cualquier flujo: <strong>congelación</strong> (inmutabilidad), <strong>opcional</strong> (fases bajo demanda), <strong>alcance</strong> (1 job o N) y <strong>puerta</strong> (revisión antes de gastar).</figcaption>
+</figure>
+<h3 class="sub3">Los campos de una fase en el <code>flow.json</code></h3>
+<div class="tw"><table>
+<tr><th>Campo</th><th>Qué hace</th><th>Valores</th></tr>
+<tr><td><code>id</code></td><td>nombre de la fase: aparece en <code>/status</code></td><td><code>texto</code>, <code>gerar</code>, <code>baixar</code>, <code>reel</code>…</td></tr>
+<tr><td><code>escopo</code></td><td>1 job por flujo, o 1 job por objetivo</td><td><code>fluxo</code> · <code>alvo</code></td></tr>
+<tr><td><code>fila</code></td><td>clase de recurso — define la concurrencia</td><td><code>texto</code> <code>io</code> <code>render</code> <code>navegador</code> <code>cpu</code></td></tr>
+<tr><td><code>kind</code></td><td>llama a un modelo o ejecuta código</td><td><code>agent</code> · <code>function</code></td></tr>
+<tr><td><code>tarefa</code></td><td>qué tarea ejecuta el bot</td><td><code>fluxo-agente</code>, <code>heygen.gerar</code>, <code>reel.montar</code>…</td></tr>
+<tr><td><code>prompt</code></td><td>archivo del dominio (solo en <code>kind: agent</code>)</td><td><code>prompts/fase1-3versoes.md</code></td></tr>
+<tr><td><code>variantes</code></td><td>prompts alternativos, intercambiados por <code>| prompt=&lt;nome&gt;</code></td><td><code>{"viral": "prompts/fase1-viral.md"}</code></td></tr>
+<tr><td><code>opcional</code></td><td>la fase solo se ejecuta si se solicitó la flag</td><td><code>api</code> <code>estudio</code> <code>creditos</code> <code>navega</code></td></tr>
+<tr><td><code>pausa_apos</code></td><td>puerta humana después de la fase</td><td><code>true</code></td></tr>
+<tr><td><code>espera</code></td><td>poll de trabajo externo</td><td><code>{intervalo, timeout}</code> en segundos</td></tr>
+<tr><td><code>max_tentativas</code></td><td>reintento antes de marcar fallo</td><td><code>2</code>, <code>3</code></td></tr>
+</table></div>
+</div></section>
+<!-- ============================ PROMOAVATAR ============================ -->
+<section id="promoavatar"><div class="wrap">
+<span class="chip">4 · Dominio A</span>
+<h2>promoavatar — un video por público</h2>
+<p class="sub">El dominio original. <strong>12 objetivos</strong> (uno por público), prefijo <code>A</code>, siete fases, de las cuales cuatro son rutas opcionales alternativas para producir el mismo avatar.</p>
+<figure class="dg">
+<svg aria-label="Flujo de fases de promoavatar" role="img" viewbox="0 0 1080 310">
+<defs>
+<marker id="a4" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--amb)"></path>
+</marker>
+</defs>
+<style>
+        .c{fill:var(--card);stroke:var(--line);stroke-width:1}
+        .ca{fill:var(--card);stroke:var(--amb);stroke-width:1.4}
+        .opt{fill:var(--bg2);stroke:var(--line);stroke-width:1;stroke-dasharray:4 3}
+        .n1{font:600 12.5px Sora,sans-serif;fill:var(--txt)}
+        .n1a{font:600 12.5px Sora,sans-serif;fill:var(--amb)}
+        .m1{font:10px Inter,sans-serif;fill:var(--mut)}
+        .k1{font:600 10px "JetBrains Mono",monospace;fill:var(--amb)}
+        .ar4{stroke:var(--amb);stroke-width:1.5;fill:none;marker-end:url(#a4)}
+        .arq{stroke:var(--mut);stroke-width:1.1;fill:none;stroke-dasharray:3 3}
+      </style>
+<text class="m1" x="20" y="22">prefijo A  ·  objetivos: pessoacomum, jovens, profissionais, mulheres, empreendedores, tecnicos, 40mais, 60mais, educadores, criadores, recolocacao, familia  (12)</text>
+<rect class="ca" height="66" rx="8" width="150" x="20" y="110"></rect>
+<text class="n1a" x="34" y="134">texto</text>
+<text class="m1" x="34" y="150">agente · cola de texto</text>
+<text class="m1" x="34" y="164">alcance del flujo · opus</text>
+<text class="k1" x="34" y="196">PUERTA</text>
+<text class="m1" x="34" y="212">Se envían 12 guiones</text>
+<text class="m1" x="34" y="226">enteros para el chat</text>
+<text class="m1" x="216" y="34">cuatro rutas para el MISMO avatar: elige una con la flag</text>
+<rect class="opt" height="38" rx="8" width="230" x="216" y="42"></rect>
+<text class="n1" x="230" y="60">generar</text>
+<text class="m1" x="230" y="74">function · io · | api</text>
+<rect class="opt" height="38" rx="8" width="230" x="216" y="88"></rect>
+<text class="n1" x="230" y="106">generar-créditos</text>
+<text class="m1" x="230" y="120">función · io · | créditos</text>
+<rect class="opt" height="38" rx="8" width="230" x="216" y="134"></rect>
+<text class="n1" x="230" y="152">estudio</text>
+<text class="m1" x="230" y="166">función · navegador · | estudio</text>
+<rect class="opt" height="38" rx="8" width="230" x="216" y="180"></rect>
+<text class="n1" x="230" y="198">navega-avatar</text>
+<text class="m1" x="230" y="212">agente · navegador · | navega</text>
+<text class="k1" x="216" y="234">solo existe aquí — promoavatar3 no tiene</text>
+<rect class="ca" height="66" rx="8" width="150" x="492" y="110"></rect>
+<text class="n1a" x="506" y="134">descargar</text>
+<text class="m1" x="506" y="150">function · io</text>
+<text class="m1" x="506" y="164">alcance del objetivo</text>
+<text class="k1" x="506" y="196">PUERTA</text>
+<text class="m1" x="506" y="212">poll hasta 40h</text>
+<rect class="c" height="66" rx="8" width="150" x="688" y="110"></rect>
+<text class="n1" x="702" y="134">reel</text>
+<text class="m1" x="702" y="150">función · render</text>
+<text class="m1" x="702" y="164">montar-reel.py</text>
+<rect class="c" height="66" rx="8" width="176" x="884" y="110"></rect>
+<text class="n1" x="898" y="134">publicar</text>
+<text class="m1" x="898" y="150">renombra según el título</text>
+<text class="m1" x="898" y="164">copia para livesN</text>
+<path class="ar4" d="M172,143 L212,143"></path>
+<path class="arq" d="M172,143 L192,143 L192,61 L212,61"></path>
+<path class="arq" d="M192,143 L192,107 L212,107"></path>
+<path class="arq" d="M192,143 L192,199 L212,199"></path>
+<path class="ar4" d="M448,61 L468,61 L468,143 L488,143"></path>
+<path class="arq" d="M448,107 L468,107"></path>
+<path class="arq" d="M448,153 L468,153"></path>
+<path class="arq" d="M448,199 L468,199 L468,143"></path>
+<path class="ar4" d="M644,143 L684,143"></path>
+<path class="ar4" d="M840,143 L880,143"></path>
+</svg>
+<figcaption>Siete fases, pero nunca siete jobs por objetivo: las cuatro rutas intermedias son mutuamente excluyentes y solo se activan con la flag. Un flujo típico ejecuta <code>texto → estudio → baixar → reel</code>.</figcaption>
+</figure>
+</div></section>
+<!-- ============================ PROMOAVATAR3 ============================ -->
+<section id="promoavatar3"><div class="wrap">
+<span class="chip">5 · Dominio C</span>
+<h2>promoavatar3 — tres videos por público</h2>
+<p class="sub">El mismo esqueleto, con el objetivo convertido en <code>&lt;publico&gt;-&lt;tipo&gt;</code>: <strong>12 públicos × 3 tipos = 36 objetivos</strong>, prefijo <code>C</code>. Ganó variantes de prompt, CTA por variante y el mapa de layout — y perdió la ruta <code>navega-avatar</code>.</p>
+<figure class="dg">
+<svg aria-label="Flujo de fases de promoavatar3" role="img" viewbox="0 0 1080 340">
+<defs>
+<marker id="a5" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--amb)"></path>
+</marker>
+</defs>
+<style>
+        .c2{fill:var(--card);stroke:var(--line);stroke-width:1}
+        .ca2{fill:var(--card);stroke:var(--amb);stroke-width:1.4}
+        .opt2{fill:var(--bg2);stroke:var(--line);stroke-width:1;stroke-dasharray:4 3}
+        .z2{fill:var(--bg2);stroke:var(--line);stroke-width:1;opacity:.5}
+        .n2{font:600 12.5px Sora,sans-serif;fill:var(--txt)}
+        .n2a{font:600 12.5px Sora,sans-serif;fill:var(--amb)}
+        .m2{font:10px Inter,sans-serif;fill:var(--mut)}
+        .k2{font:600 10px "JetBrains Mono",monospace;fill:var(--amb)}
+        .ar5{stroke:var(--amb);stroke-width:1.5;fill:none;marker-end:url(#a5)}
+        .arq2{stroke:var(--mut);stroke-width:1.1;fill:none;stroke-dasharray:3 3}
+      </style>
+<rect class="z2" height="52" rx="9" width="1040" x="20" y="14"></rect>
+<text class="m2" x="34" y="34">objetivo = &lt;publico&gt;-&lt;tipo&gt;   ·   -alc  alcance 25–40s (compartir)   ·   -aut  autoridad 35–60s (guardar)   ·   -pro  promocional 30–45s (CTA)</text>
+<text class="m2" x="34" y="52">cada objetivo lleva en flow.json:  canal (livesN)  ·  disparador (el dolor de ese público)  ·  cierre (el final de ese tipo)</text>
+<rect class="ca2" height="76" rx="8" width="160" x="20" y="140"></rect>
+<text class="n2a" x="34" y="164">texto</text>
+<text class="m2" x="34" y="180">agente · cola de texto</text>
+<text class="m2" x="34" y="194">alcance del flujo</text>
+<text class="m2" x="34" y="208">1 llamada → 36 archivos</text>
+<text class="k2" x="34" y="236">PUERTA</text>
+<rect class="z2" height="72" rx="8" width="160" x="20" y="250"></rect>
+<text class="k2" x="34" y="270">variantes</text>
+<text class="m2" x="34" y="286">| prompt=manifesto</text>
+<text class="m2" x="34" y="300">| prompt=viral</text>
+<text class="m2" x="34" y="314">cambian el prompt de la fase</text>
+<text class="m2" x="226" y="88">tres rutas para el avatar</text>
+<rect class="opt2" height="38" rx="8" width="236" x="226" y="96"></rect>
+<text class="n2" x="240" y="114">generar</text>
+<text class="m2" x="240" y="128">function · io · | api</text>
+<rect class="opt2" height="38" rx="8" width="236" x="226" y="142"></rect>
+<text class="n2" x="240" y="160">generar-créditos</text>
+<text class="m2" x="240" y="174">función · io · | créditos</text>
+<rect class="opt2" height="38" rx="8" width="236" x="226" y="188"></rect>
+<text class="n2" x="240" y="206">estudio</text>
+<text class="m2" x="240" y="220">función · navegador · | estudio</text>
+<rect class="ca2" height="76" rx="8" width="150" x="510" y="140"></rect>
+<text class="n2a" x="524" y="164">descargar</text>
+<text class="m2" x="524" y="180">function · io</text>
+<text class="m2" x="524" y="194">búsqueda por título</text>
+<text class="k2" x="524" y="236">PUERTA</text>
+<rect class="c2" height="76" rx="8" width="164" x="706" y="140"></rect>
+<text class="n2" x="720" y="164">reel</text>
+<text class="m2" x="720" y="180">función · render</text>
+<text class="m2" x="720" y="194">montar-reel.py</text>
+<text class="m2" x="720" y="208">--flow  --cta</text>
+<rect class="c2" height="76" rx="8" width="160" x="900" y="140"></rect>
+<text class="n2" x="914" y="164">publicar</text>
+<text class="m2" x="914" y="180">nombre = título</text>
+<text class="m2" x="914" y="194">copia para el canal</text>
+<text class="m2" x="914" y="208">del objetivo</text>
+<rect class="z2" height="72" rx="8" width="354" x="706" y="250"></rect>
+<text class="k2" x="720" y="270">cta: { padrao, viral }</text>
+<text class="m2" x="720" y="286">el clip de cierre se elige POR VARIANTE y por flujo —</text>
+<text class="m2" x="720" y="302">nunca por tipo de objetivo. Los 36 objetivos reciben el mismo clip.</text>
+<text class="m2" x="720" y="316">src/dominio/flow.ts → ctaDaDefinicao()</text>
+<path class="ar5" d="M182,178 L222,178"></path>
+<path class="arq2" d="M182,178 L204,178 L204,115 L222,115"></path>
+<path class="arq2" d="M204,178 L204,207 L222,207"></path>
+<path class="ar5" d="M464,115 L486,115 L486,178 L506,178"></path>
+<path class="arq2" d="M464,161 L486,161"></path>
+<path class="arq2" d="M464,207 L486,207 L486,178"></path>
+<path class="ar5" d="M662,178 L702,178"></path>
+<path class="ar5" d="M872,178 L896,178"></path>
+<path class="arq2" d="M100,250 L100,220"></path>
+<path class="arq2" d="M790,250 L790,220"></path>
+</svg>
+<figcaption>La diferencia estructural con promoavatar no es el número de fases — es lo que el <em>objetivo</em> significa. Aquí carga tipo, canal, activador y cierre, y eso es lo que hace que un tema se convierta en 36 guiones diferentes en una sola llamada.</figcaption>
+</figure>
+<h3 class="sub3">promoavatar vs promoavatar3</h3>
+<div class="tw"><table>
+<tr><th></th><th>promoavatar</th><th>promoavatar3</th></tr>
+<tr><td>prefijo</td><td><code>A</code></td><td><code>C</code></td></tr>
+<tr><td>objetivo</td><td><code>&lt;publico&gt;</code> — 12</td><td><code>&lt;publico&gt;-&lt;tipo&gt;</code> — 36</td></tr>
+<tr><td>fases</td><td>7 (4 rutas opcionales)</td><td>6 (3 rutas opcionales)</td></tr>
+<tr><td>ruta <code>| navega</code></td><td>tiene (el agente pilota el navegador)</td><td>no tiene</td></tr>
+<tr><td>variantes de prompt</td><td>no</td><td><code>manifesto</code>, <code>viral</code></td></tr>
+<tr><td>CTA</td><td>valor predeterminado del motor</td><td><code>cta: {padrao, viral}</code> por variante</td></tr>
+<tr><td>modelo de la fase de texto</td><td><code>opus</code> fijado en el <code>flow.json</code></td><td>perfil predeterminado del bot</td></tr>
+<tr><td>timeout del reel</td><td>10800s (3h)</td><td>21600s (6h)</td></tr>
+</table></div>
+<div class="note">
+<strong>Ten cuidado al editar los dos:</strong> los prompts divergieron sin que nadie lo decidiera: se editaron cerca de 330 líneas idénticas por triplicado. Si modificas una regla estructural (de las que exige el motor, como las secciones <code>SOBREPOSIÇÕES</code> e <code>IMAGENS</code>), hay que replicarlo en todos los prompts de los dos repos. Nada en el sistema lo impone.
+  </div>
+</div></section>
+<!-- ============================ REEL ============================ -->
+<section id="reel"><div class="wrap">
+<span class="chip">6 · Motor</span>
+<h2>El motor del reel: un motor, N dominios</h2>
+<p class="sub">La fase <code>reel</code> no renderiza nada: arma una línea de comandos y ejecuta un proceso en segundo plano. Todo el render se hace en Python, en el repo de dominio; y un dominio puede apuntar al motor de otro con <code>motor_repo</code>, en vez de copiar los scripts.</p>
+<figure class="dg">
+<svg aria-label="Motor de renderizado del reel" role="img" viewbox="0 0 1080 400">
+<defs>
+<marker id="a6" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--amb)"></path>
+</marker>
+</defs>
+<style>
+        .c3{fill:var(--card);stroke:var(--line);stroke-width:1}
+        .ca3{fill:var(--card);stroke:var(--amb);stroke-width:1.4}
+        .z3{fill:var(--bg2);stroke:var(--line);stroke-width:1;opacity:.5}
+        .st{fill:var(--bg2);stroke:var(--line);stroke-width:1}
+        .n3{font:600 12.5px Sora,sans-serif;fill:var(--txt)}
+        .n3a{font:600 12.5px Sora,sans-serif;fill:var(--amb)}
+        .m3{font:10px Inter,sans-serif;fill:var(--mut)}
+        .mm{font:600 10.5px "JetBrains Mono",monospace;fill:var(--txt)}
+        .k3{font:600 10px "JetBrains Mono",monospace;fill:var(--amb)}
+        .ar6{stroke:var(--amb);stroke-width:1.5;fill:none;marker-end:url(#a6)}
+      </style>
+<rect class="ca3" height="76" rx="8" width="250" x="20" y="24"></rect>
+<text class="n3a" x="34" y="46">src/fila/tarefas/reel.ts</text>
+<text class="m3" x="34" y="63">montarComando() — solo arma la cadena</text>
+<text class="mm" x="34" y="80">--avatar --ws --alvo --textos</text>
+<text class="mm" x="34" y="94">--saida --flow --cta</text>
+<rect class="c3" height="76" rx="8" width="230" x="316" y="24"></rect>
+<text class="n3" x="330" y="46">bash -c resaltado</text>
+<text class="m3" x="330" y="63">echo $$ &gt; .pid  → o /cancelar</text>
+<text class="m3" x="330" y="77">mata el proceso correcto</text>
+<text class="m3" x="330" y="91">|| touch .err  → falla en segundos</text>
+<rect class="ca3" height="76" rx="8" width="468" x="592" y="24"></rect>
+<text class="n3a" x="606" y="46">scripts/montar-reel.py — en el repo de DOMINIO</text>
+<text class="m3" x="606" y="63">el bot no sabe qué es un reel; solo sabe ejecutar un script y vigilar el archivo de salida</text>
+<text class="m3" x="606" y="80">motor_repo en flow.json permite que un dominio use el motor de otro, sin copiar</text>
+<path class="ar6" d="M272,62 L312,62"></path>
+<path class="ar6" d="M548,62 L588,62"></path>
+<text class="k3" x="20" y="134">LOS SEIS PASOS DE montar-reel.py</text>
+<rect class="st" height="52" rx="8" width="166" x="20" y="144"></rect>
+<text class="n3" x="32" y="164">1/6 preparar</text>
+<text class="m3" x="32" y="180">medios, transcripción,</text>
+<text class="m3" x="32" y="192">imágenes, template, HTML</text>
+<rect class="st" height="52" rx="8" width="166" x="198" y="144"></rect>
+<text class="n3" x="210" y="164">2/6 puerta 1</text>
+<text class="m3" x="210" y="180">lint + ritmo visual</text>
+<text class="m3" x="210" y="192">antes de gastar en el render</text>
+<rect class="st" height="52" rx="8" width="166" x="376" y="144"></rect>
+<text class="n3" x="388" y="164">3/6 render</text>
+<text class="m3" x="388" y="180">HTML → frames → mp4</text>
+<rect class="st" height="52" rx="8" width="166" x="554" y="144"></rect>
+<text class="n3" x="566" y="164">4/6 revisor</text>
+<text class="m3" x="566" y="180">audio del render,</text>
+<text class="m3" x="566" y="192">silencio, ritmo</text>
+<rect class="st" height="52" rx="8" width="166" x="732" y="144"></rect>
+<text class="n3" x="744" y="164">5/6 CTA</text>
+<text class="m3" x="744" y="180">clip de cierre</text>
+<text class="m3" x="744" y="192">+ entregable</text>
+<rect class="st" height="52" rx="8" width="150" x="910" y="144"></rect>
+<text class="n3" x="922" y="164">6/6 QC</text>
+<text class="m3" x="922" y="180">puertas 2 y 3</text>
+<text class="k3" x="20" y="232">DENTRO DEL PASO 1 — scripts/preparar.py, una sola llamada</text>
+<rect class="z3" height="88" rx="9" width="640" x="20" y="242"></rect>
+<text class="m3" x="34" y="262">1. crea el workspace   2. lee la duración/fps (ffprobe)   3. extrae el audio y lo transcribe</text>
+<text class="m3" x="34" y="278">4. detecta repeticiones   5. GENERA LAS IMÁGENES de la sección ## IMAGENS del guion</text>
+<text class="m3" x="34" y="294">6. escribe manifesto.json   7. llama a montar.py y entrega motion/index.html</text>
+<text class="m3" x="34" y="316">Existe porque el reel consumía 38 comandos de shell por video; ninguno requería tomar decisiones.</text>
+<text class="k3" x="700" y="232">CÓMO SE ELIGE EL DISEÑO</text>
+<rect class="z3" height="88" rx="9" width="360" x="700" y="242"></rect>
+<text class="m3" x="714" y="262">La fase de texto guarda `Formato escolhido:` por objetivo.</text>
+<text class="m3" x="714" y="278">templates/mapa.json traduce el formato editorial → layout.</text>
+<text class="mm" x="714" y="298">--template &gt; alvo.template &gt; mapa[formato] &gt; raiz</text>
+<text class="m3" x="714" y="316">Nadie elige el layout durante el renderizado.</text>
+<text class="k3" x="20" y="364">PLANTILLAS DISPONIBLES</text>
+<text class="m3" x="20" y="384">empilhado-capa (imagen arriba + avatar + panel de texto)  ·  diptico (mitad y mitad)  ·  imagem-plena (avatar en recorte arriba a la derecha)  ·  empilhado-explicativo (base = video explicativo, sin sonido y en bucle)</text>
+</svg>
+<figcaption>El motor es deliberadamente simple del lado del bot e inteligente del lado del dominio. Esto permite cambiar el aspecto de todos los reels editando un JSON, sin recompilar nada.</figcaption>
+</figure>
+</div></section>
+<!-- ============================ ONDE ALTERAR ============================ -->
+<section id="alterar"><div class="wrap">
+<span class="chip">7 · Recetas</span>
+<h2>Quiero cambiar X: ¿dónde lo modifico?</h2>
+<p class="sub">La tabla que responde el 90% de las preguntas de quienes llegan al sistema. La columna de la derecha indica si hace falta reiniciar el proceso.</p>
+<div class="tw"><table>
+<tr><th>Quiero…</th><th>Cambio</th><th>¿Restart?</th></tr>
+<tr><td>Cambiar el texto que escribe la IA</td><td><code>&lt;dominio&gt;/prompts/fase1-*.md</code></td><td>no</td></tr>
+<tr><td>Agregar un público / objetivo</td><td><code>&lt;dominio&gt;/flow.json</code> → <code>alvos</code></td><td>no</td></tr>
+<tr><td>Cambiar el canal de un público</td><td><code>&lt;dominio&gt;/flow.json</code> → <code>alvos.&lt;alvo&gt;.canal</code></td><td>no</td></tr>
+<tr><td>Crear un canal nuevo (<code>lives7</code>)</td><td>crear la carpeta <code>~/projetos/yt-pub-lives7/imports/videos</code></td><td>no</td></tr>
+<tr><td>Cambiar el avatar o la voz</td><td><code>&lt;dominio&gt;/flow.json</code> → <code>avatar_id</code>, <code>voice_id</code>, <code>engine</code></td><td>no</td></tr>
+<tr><td>Cambiar el aspecto del reel</td><td><code>&lt;dominio&gt;/templates/*.json</code></td><td>no</td></tr>
+<tr><td>Cambiar el layout que usa cada formato</td><td><code>&lt;dominio&gt;/templates/mapa.json</code></td><td>no</td></tr>
+<tr><td>Definir un diseño para un público</td><td><code>flow.json</code> → <code>alvos.&lt;alvo&gt;.template</code></td><td>no</td></tr>
+<tr><td>Cambiar el clip de cierre</td><td><code>&lt;dominio&gt;/cta/*.mp4</code> + <code>flow.json</code> → <code>cta</code></td><td>no</td></tr>
+<tr><td>Crear una variante de prompt</td><td><code>flow.json</code> → <code>fases[texto].variantes</code> + el nuevo <code>.md</code></td><td>no</td></tr>
+<tr><td>Agregar una fase al pipeline</td><td><code>flow.json</code> → <code>fases</code> <em>(la tarea ya debe existir en el bot)</em></td><td>no</td></tr>
+<tr><td>Agregar una <em>tarea</em> nueva</td><td><code>src/fila/tarefas/</code> + registrar en <code>tarefas/index.ts</code></td><td><strong>sí</strong></td></tr>
+<tr><td>Registrar un dominio nuevo</td><td><code>config/fluxos.json</code></td><td><strong>sí</strong></td></tr>
+<tr><td>Registrar una skill de una etapa</td><td><code>config/skills.json</code> + <code>prompts/&lt;nome&gt;.md</code></td><td><strong>sí</strong></td></tr>
+<tr><td>Cambiar la concurrencia de una cola</td><td><code>src/fila/filas.ts</code> → <code>CONCORRENCIAS</code></td><td><strong>sí</strong></td></tr>
+<tr><td>Cambiar la clave de HeyGen / token</td><td><code>.env</code></td><td><strong>sí</strong></td></tr>
+<tr><td>Cambiar la ayuda que aparece en el chat</td><td><code>&lt;dominio&gt;/HELP.md</code></td><td>no</td></tr>
+</table></div>
+<h3 class="sub3">Un dominio nuevo, desde cero, sin tocar el bot</h3>
+<p class="sub">Esta es la prueba de que la frontera está en el lugar correcto. Si tu nuevo dominio exige editar TypeScript, necesita una tarea que no existe o la frontera se filtró.</p>
+<pre><span class="c"># 1. el repo del dominio, junto al bot</span>
+<span class="k">mkdir</span> ~/projetos/meudominio &amp;&amp; <span class="k">cd</span> ~/projetos/meudominio
+
+<span class="c"># 2. flow.json — objetivos, fases y el motor de otro repo</span>
+<span class="k">cat</span> &gt; flow.json &lt;&lt;<span class="s">'JSON'</span>
+{
+  "nome": "meudominio", "prefixo": "M", "versao_def": 1,
+  "motor_repo": "promoavatar3",
+  "templates_dir": "templates", "template": "empilhado-capa",
+  "alvos": { "ep01": { "canal": "lives2", "fecho": "..." } },
+  "fases": [
+    { "id": "texto", "escopo": "fluxo", "fila": "texto",
+      "kind": "agent", "tarefa": "fluxo-agente",
+      "prompt": "prompts/fase1.md", "pausa_apos": true },
+    { "id": "reel", "escopo": "alvo", "fila": "render",
+      "kind": "function", "tarefa": "reel.montar" }
+  ]
+}
+JSON
+
+<span class="c"># 3. registrar en el bot — ÚNICO punto que requiere reiniciar</span>
+<span class="c"># config/fluxos.json:  {"command":"meudominio","repo":"meudominio",...}</span>
+
+<span class="c"># 4. probar SIN gastar avatar ni render</span>
+/meudominio assunto de teste | sombra</pre>
+<div class="note">
+<strong>Antes de reiniciar el servicio:</strong> revisa <code>/fila</code> y comprueba si hay un job <code>running</code>. Restart termina el render en curso — y un reel con 6h de timeout vuelve a empezar desde cero.
+  </div>
+</div></section>
+<!-- ============================ FRONTEIRAS ============================ -->
+<section id="fronteiras"><div class="wrap">
+<span class="chip">8 · Para quien vaya a copiar el diseño</span>
+<h2>Las decisiones que hacen que este sistema funcione</h2>
+<p class="sub">No son detalles de implementación: son las decisiones que evitaron clases enteras de errores y que sirven para cualquier sistema de colas con agentes.</p>
+<div class="grid g2">
+<div class="card">
+<h3>1 · Quien orquesta no trabaja</h3>
+<p>El worker ejecuta y marca <code>done</code>/<code>failed</code>. Quien decide la siguiente fase es el runtime, dentro de la <em>misma transacción</em> del ack. Separar eso fue lo que acabó con el dispatch duplicado de la versión anterior.</p>
+</div>
+<div class="card">
+<h3>2 · Congelar la definición</h3>
+<p>El texto de los prompts se incorpora al flujo al crearlo. Editar el prompt hoy no altera un flujo de ayer, y <code>/refazer</code> reproduce exactamente lo que se ejecutó.</p>
+</div>
+<div class="card">
+<h3>3 · Catálogo cerrado</h3>
+<p>El agente que interpreta texto libre puede alucinar un comando. Su salida se valida contra el registry <em>antes</em> de convertirse en job: un comando que no existe es un rechazo, no un intento.</p>
+</div>
+<div class="card">
+<h3>4 · La instrucción no es una puerta</h3>
+<p>Pedirlo en el prompt no garantiza nada. Cuando el agente del reel ignoró la sección <code>IMAGENS</code> e inventó sus propios prompts, la corrección no fue escribir la regla en negrita: fue mover la generación de imágenes dentro del <code>preparar.py</code>. Solo el script, el exit code o la ruta eliminada cambian el comportamiento.</p>
+</div>
+<div class="card">
+<h3>5 · Puerta antes de gastar</h3>
+<p><code>pausa_apos</code> existe donde el siguiente paso cuesta dinero u horas. Revisar 36 guiones en el chat es barato; rehacer 36 avatares no lo es.</p>
+</div>
+<div class="card">
+<h3>6 · Nombre, no ruta</h3>
+<p>El dominio dice <code>lives2</code>; solo el bot sabe que esto es <code>~/projetos/yt-pub-lives2/imports/videos</code>. Una lista de canales en N copias diverge; en un solo lugar, no.</p>
+</div>
+</div>
+<h3 class="sub3">Qué no existe, a propósito</h3>
+<p class="sub">Barrera entre fases, preempción de jobs, límite global de agentes y multiusuario. Cada ausencia tiene un detonante documentado para reconsiderarla. Un sistema que nace con todo es un sistema que nadie termina.</p>
+</div></section>
+<footer>
+<div class="wrap">
+<div style="margin-bottom:14px">
+<span class="pill">TypeScript</span><span class="pill">Node 22+</span><span class="pill">SQLite WAL</span>
+<span class="pill">Telegram Bot API</span><span class="pill">Python 3</span><span class="pill">ffmpeg</span>
+<span class="pill">Playwright</span><span class="pill">HeyGen</span>
+</div>
+<p>
+<a href="https://github.com/inematds/inemaccbot" rel="noopener" target="_blank">github.com/inematds/inemaccbot</a>
+       ·  <a href="index.html">Guía de uso</a>
+       ·  <a class="inema" href="https://inema.club" rel="noopener" style="color:var(--sky)" target="_blank">INEMA.CLUB</a>
+</p>
+</div>
+</footer>
+<script>
+  (function () {
+    var b = document.body, t = document.getElementById('themeToggle');
+    var saved = localStorage.getItem('inema-theme');
+    if (saved === 'light') { b.classList.add('light'); t.textContent = '☀️'; }
+    t.addEventListener('click', function () {
+      b.classList.toggle('light');
+      var light = b.classList.contains('light');
+      t.textContent = light ? '☀️' : '🌙';
+      localStorage.setItem('inema-theme', light ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>

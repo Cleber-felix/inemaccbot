@@ -1,13 +1,14 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>inemaccbot — gateway Telegram + fila durável para rodar agentes</title>
-<meta name="description" content="Bot de Telegram com fila durável em SQLite que roda skills e fluxos de várias fases com estado, portão humano e retomada. Domínio novo entra sem uma linha de código.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<meta content="Bot de Telegram com fila durável em SQLite que roda skills e fluxos de várias fases com estado, portão humano e retomada. Domínio novo entra sem uma linha de código." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <style>
   :root{
     --bg:#0c0c10; --bg2:#14141b; --card:#16161e; --line:#272730;
@@ -90,182 +91,166 @@
   footer{padding:46px 0;text-align:center;color:var(--mut);font-size:.9rem}
   .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.3em .8em;font-size:.78rem;color:var(--mut);margin:0 4px}
 </style>
-</head>
-<body>
-
+<link href="https://inematds.github.io/inemaccbot/guia/" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/inemaccbot/guia/en/" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/inemaccbot/guia/es/" hreflang="es" rel="alternate"/></head>
+<body><div class="inema-lang" style="position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:2px;padding:4px;border-radius:10px;background:rgba(12,12,16,.82);border:1px solid rgba(226,162,59,.45);font:600 12px/1 Sora,Inter,system-ui,sans-serif;backdrop-filter:blur(8px)" translate="no"><a href="./" hreflang="pt-BR" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#1a1206;background:#E2A23B">PT</a><a href="en/" hreflang="en" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">EN</a><a href="es/" hreflang="es" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">ES</a></div>
 <nav><div class="wrap">
-  <a class="brand" href="#top"><span class="emoji">🤖</span> inemaccbot</a>
-  <span class="sep">|</span>
-  <span class="clubpro">
-    <a class="inema" href="https://inema.club" target="_blank" rel="noopener">INEMA.CLUB</a>
-    <span class="sep">-</span>
-    <a class="pro" href="https://inema.pro" target="_blank" rel="noopener">PRO</a>
-  </span>
-  <div class="links">
-    <a class="sec" href="#oque">O que é</a>
-    <a class="sec" href="#fluxo">Como funciona</a>
-    <a class="sec" href="#pre">Pré-requisitos</a>
-    <a class="sec" href="#guia">Guia de uso</a>
-    <a class="sec" href="#dominio">Domínio novo</a>
-    <a class="sec" href="#roadmap">Estado</a>
-    <a class="sec" href="arquitetura.html">Arquitetura</a>
-    <button class="tgl" id="themeToggle" aria-label="Alternar tema" title="Alternar tema">🌙</button>
-    <a class="btn" href="https://github.com/inematds/inemaccbot" target="_blank" rel="noopener">GitHub</a>
-  </div>
+<a class="brand" href="#top"><span class="emoji">🤖</span> inemaccbot</a>
+<span class="sep">|</span>
+<span class="clubpro">
+<a class="inema" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<span class="sep">-</span>
+<a class="pro" href="https://inema.pro" rel="noopener" target="_blank">PRO</a>
+</span>
+<div class="links">
+<a class="sec" href="#oque">O que é</a>
+<a class="sec" href="#fluxo">Como funciona</a>
+<a class="sec" href="#pre">Pré-requisitos</a>
+<a class="sec" href="#guia">Guia de uso</a>
+<a class="sec" href="#dominio">Domínio novo</a>
+<a class="sec" href="#roadmap">Estado</a>
+<a class="sec" href="arquitetura.html">Arquitetura</a>
+<button aria-label="Alternar tema" class="tgl" id="themeToggle" title="Alternar tema">🌙</button>
+<a class="btn" href="https://github.com/inematds/inemaccbot" rel="noopener" target="_blank">GitHub</a>
+</div>
 </div></nav>
-
 <header class="hero" id="top">
-  <div class="glow"></div>
-  <div class="wrap">
-    <div>
-      <span class="chip">Gateway Telegram · fila durável</span>
-      <h1>Você manda uma linha no chat. O <span class="amb">trabalho pesado</span> acontece sozinho.</h1>
-      <p class="lead">Bot de Telegram com fila durável em SQLite: roda skills de uma etapa e fluxos de várias fases com estado, portão humano e retomada depois de queda.</p>
-      <div class="cta">
-        <a class="btn" href="#guia">Começar o guia</a>
-        <a class="btn ghost" href="https://github.com/inematds/inemaccbot" target="_blank" rel="noopener">Ver no GitHub</a>
-      </div>
-    </div>
-    <figure><img src="assets/hero.png" alt="inemaccbot — gateway Telegram e fila durável"></figure>
-  </div>
+<div class="glow"></div>
+<div class="wrap">
+<div>
+<span class="chip">Gateway Telegram · fila durável</span>
+<h1>Você manda uma linha no chat. O <span class="amb">trabalho pesado</span> acontece sozinho.</h1>
+<p class="lead">Bot de Telegram com fila durável em SQLite: roda skills de uma etapa e fluxos de várias fases com estado, portão humano e retomada depois de queda.</p>
+<div class="cta">
+<a class="btn" href="#guia">Começar o guia</a>
+<a class="btn ghost" href="https://github.com/inematds/inemaccbot" rel="noopener" target="_blank">Ver no GitHub</a>
+</div>
+</div>
+<figure><img alt="inemaccbot — gateway Telegram e fila durável" src="assets/hero.png"/></figure>
+</div>
 </header>
-
 <section id="oque"><div class="wrap">
-  <span class="chip">O que é</span>
-  <h2>Um operador que não perde trabalho no meio</h2>
-  <p class="sub">O bot recebe comandos no Telegram, enfileira o trabalho e o executa como agente. A fila é durável: se o processo cair no meio de um render, na próxima subida ele reclama o que ficou em voo antes de aceitar trabalho novo.</p>
-  <div class="grid g3">
-    <div class="card"><h3>🗄️ Fila durável de verdade</h3><p>SQLite em WAL, claim atômico, lease com heartbeat e drain no desligamento. Um <code>kill -9</code> no meio de um job não deixa estado indefinido — nada fica <code>running</code> com lease vivo.</p></div>
-    <div class="card"><h3>⏸️ Fluxos com portão humano</h3><p>Pipeline com estado por fase e por alvo, definição congelada na criação, pausa para você fazer sua parte (<code>/aprovar</code>) e retomada seletiva com <code>/refazer</code>.</p></div>
-    <div class="card"><h3>🧩 Domínio novo sem código</h3><p>Uma skill é um prompt + uma entrada no registry. Um fluxo é um repo com <code>flow.json</code> + <code>prompts/</code>. Nenhum dos dois pede uma linha de TypeScript no bot.</p></div>
-  </div>
+<span class="chip">O que é</span>
+<h2>Um operador que não perde trabalho no meio</h2>
+<p class="sub">O bot recebe comandos no Telegram, enfileira o trabalho e o executa como agente. A fila é durável: se o processo cair no meio de um render, na próxima subida ele reclama o que ficou em voo antes de aceitar trabalho novo.</p>
+<div class="grid g3">
+<div class="card"><h3>🗄️ Fila durável de verdade</h3><p>SQLite em WAL, claim atômico, lease com heartbeat e drain no desligamento. Um <code>kill -9</code> no meio de um job não deixa estado indefinido — nada fica <code>running</code> com lease vivo.</p></div>
+<div class="card"><h3>⏸️ Fluxos com portão humano</h3><p>Pipeline com estado por fase e por alvo, definição congelada na criação, pausa para você fazer sua parte (<code>/aprovar</code>) e retomada seletiva com <code>/refazer</code>.</p></div>
+<div class="card"><h3>🧩 Domínio novo sem código</h3><p>Uma skill é um prompt + uma entrada no registry. Um fluxo é um repo com <code>flow.json</code> + <code>prompts/</code>. Nenhum dos dois pede uma linha de TypeScript no bot.</p></div>
+</div>
 </div></section>
-
 <section id="fluxo"><div class="wrap">
-  <span class="chip">Como funciona</span>
-  <h2>Do comando no chat até o arquivo entregue</h2>
-  <p class="sub">O gateway valida quem fala (allowlist de chat), o comando vira job na fila certa, um worker reclama o job com lease, o agente executa e o notificador devolve o resultado no chat.</p>
-  <div class="flow">
-    <span>comando no Telegram</span><span class="arr">→</span>
-    <span>allowlist + parse</span><span class="arr">→</span>
-    <span>job na fila (SQLite)</span><span class="arr">→</span>
-    <span>worker reclama (lease)</span><span class="arr">→</span>
-    <span>agente executa</span><span class="arr">→</span>
-    <span>artefato + aviso no chat</span>
-  </div>
-  <div class="grid g3" style="margin-top:28px">
-    <div class="card"><h3>Cinco filas, concorrências diferentes</h3><p><code>io</code> (10) · <code>cpu</code> (1) · <code>texto</code> (2) · <code>render</code> (1) · <code>navegador</code> (1). Um render pesado não trava a fila de texto.</p></div>
-    <div class="card"><h3>Skill × fluxo</h3><p>Skill = uma etapa, sem estado — refazer do zero é aceitável. Fluxo = várias fases com estado, quando jogar fora o trabalho parcial seria absurdo.</p></div>
-    <div class="card"><h3>Boot em ordem</h3><p>Migrations → raiz de mídia → recuperação de leases vencidos → só então workers e bot. É essa ordem que torna o processo recuperável de uma queda.</p></div>
-  </div>
+<span class="chip">Como funciona</span>
+<h2>Do comando no chat até o arquivo entregue</h2>
+<p class="sub">O gateway valida quem fala (allowlist de chat), o comando vira job na fila certa, um worker reclama o job com lease, o agente executa e o notificador devolve o resultado no chat.</p>
+<div class="flow">
+<span>comando no Telegram</span><span class="arr">→</span>
+<span>allowlist + parse</span><span class="arr">→</span>
+<span>job na fila (SQLite)</span><span class="arr">→</span>
+<span>worker reclama (lease)</span><span class="arr">→</span>
+<span>agente executa</span><span class="arr">→</span>
+<span>artefato + aviso no chat</span>
+</div>
+<div class="grid g3" style="margin-top:28px">
+<div class="card"><h3>Cinco filas, concorrências diferentes</h3><p><code>io</code> (10) · <code>cpu</code> (1) · <code>texto</code> (2) · <code>render</code> (1) · <code>navegador</code> (1). Um render pesado não trava a fila de texto.</p></div>
+<div class="card"><h3>Skill × fluxo</h3><p>Skill = uma etapa, sem estado — refazer do zero é aceitável. Fluxo = várias fases com estado, quando jogar fora o trabalho parcial seria absurdo.</p></div>
+<div class="card"><h3>Boot em ordem</h3><p>Migrations → raiz de mídia → recuperação de leases vencidos → só então workers e bot. É essa ordem que torna o processo recuperável de uma queda.</p></div>
+</div>
 </div></section>
-
 <section id="pre"><div class="wrap">
-  <span class="chip">Pré-requisitos</span>
-  <h2>O que precisa estar no lugar</h2>
-  <p class="sub">Node com TypeScript, um bot criado no Telegram e um <code>.env</code> com as cinco variáveis obrigatórias. Sem uma delas o boot falha alto e cedo, antes de subir qualquer worker.</p>
-  <div class="grid g3">
-    <div class="card"><h3>Node + dependências</h3><p>Instale e rode os testes antes de subir qualquer coisa.</p><pre><span class="c"># na raiz do repo</span>
+<span class="chip">Pré-requisitos</span>
+<h2>O que precisa estar no lugar</h2>
+<p class="sub">Node com TypeScript, um bot criado no Telegram e um <code>.env</code> com as cinco variáveis obrigatórias. Sem uma delas o boot falha alto e cedo, antes de subir qualquer worker.</p>
+<div class="grid g3">
+<div class="card"><h3>Node + dependências</h3><p>Instale e rode os testes antes de subir qualquer coisa.</p><pre><span class="c"># na raiz do repo</span>
 <span class="k">npm install</span>
 <span class="k">npm test</span></pre></div>
-    <div class="card"><h3>Bot no Telegram</h3><p>Crie o bot no <code>@BotFather</code> e guarde o token. O valor real nunca vai para o git.</p><pre><span class="c"># .env (modo 600, fora do git)</span>
+<div class="card"><h3>Bot no Telegram</h3><p>Crie o bot no <code>@BotFather</code> e guarde o token. O valor real nunca vai para o git.</p><pre><span class="c"># .env (modo 600, fora do git)</span>
 BOT_TOKEN=<span class="s">…</span>
 ALLOWED_CHAT_IDS=<span class="s">123,456</span></pre></div>
-    <div class="card"><h3>Estado em disco</h3><p>Caminho do banco da fila, raiz de estado e arquivo de log — as outras três obrigatórias.</p><pre>QUEUE_DB=<span class="s">./inemaccbot.db</span>
+<div class="card"><h3>Estado em disco</h3><p>Caminho do banco da fila, raiz de estado e arquivo de log — as outras três obrigatórias.</p><pre>QUEUE_DB=<span class="s">./inemaccbot.db</span>
 STATE_DIR=<span class="s">./estado</span>
 LOG_FILE=<span class="s">./inemaccbot.log</span></pre></div>
-  </div>
+</div>
 </div></section>
-
 <section id="guia"><div class="wrap">
-  <span class="chip">Guia de uso · passo a passo</span>
-  <h2>Subir o serviço e operar pelo chat</h2>
-  <p class="sub">Todos os comandos abaixo são reais — os de shell rodam no repo, os que começam com barra você digita no Telegram.</p>
-
-  <div class="step"><div class="b">1</div><div>
-    <h3>Instale, teste e compile</h3>
-    <p>O registry de skills e fluxos é validado no boot: uma entrada inválida derruba o serviço de propósito.</p>
+<span class="chip">Guia de uso · passo a passo</span>
+<h2>Subir o serviço e operar pelo chat</h2>
+<p class="sub">Todos os comandos abaixo são reais — os de shell rodam no repo, os que começam com barra você digita no Telegram.</p>
+<div class="step"><div class="b">1</div><div>
+<h3>Instale, teste e compile</h3>
+<p>O registry de skills e fluxos é validado no boot: uma entrada inválida derruba o serviço de propósito.</p>
 <pre><span class="k">npm install</span>
 <span class="k">npm test</span>          <span class="c"># vitest run</span>
 <span class="k">npm run typecheck</span>  <span class="c"># tsc --noEmit</span>
-<span class="k">npm run build</span>      <span class="c"># tsc -> dist/index.js</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">2</div><div>
-    <h3>Suba o processo</h3>
-    <p>Em produção via systemd, com o <code>.env</code> no mesmo diretório de trabalho (<code>deploy/inemaccbot.service</code>).</p>
+<span class="k">npm run build</span>      <span class="c"># tsc -&gt; dist/index.js</span></pre>
+</div></div>
+<div class="step"><div class="b">2</div><div>
+<h3>Suba o processo</h3>
+<p>Em produção via systemd, com o <code>.env</code> no mesmo diretório de trabalho (<code>deploy/inemaccbot.service</code>).</p>
 <pre><span class="k">node dist/index.js</span>                       <span class="c"># direto</span>
 <span class="k">systemctl --user start inemaccbot</span>       <span class="c"># como serviço</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">3</div><div>
-    <h3>Confirme que está vivo</h3>
-    <p>No chat autorizado. <code>/ajuda</code> lista tudo; <code>/skills</code> e <code>/fluxos</code> são os dois catálogos.</p>
+</div></div>
+<div class="step"><div class="b">3</div><div>
+<h3>Confirme que está vivo</h3>
+<p>No chat autorizado. <code>/ajuda</code> lista tudo; <code>/skills</code> e <code>/fluxos</code> são os dois catálogos.</p>
 <pre><span class="k">/ping</span>
 <span class="k">/ajuda</span>
 <span class="k">/skills</span>   <span class="c"># uma etapa, sem estado</span>
 <span class="k">/fluxos</span>   <span class="c"># várias fases, com estado</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">4</div><div>
-    <h3>Rode uma skill</h3>
-    <p>O formato é <code>&lt;skill&gt;: &lt;entrada&gt; [| campo]*</code>. Campos genéricos: <code>livesN</code> (destino), <code>modelo=haiku</code>, <code>esforco=high</code>.</p>
+</div></div>
+<div class="step"><div class="b">4</div><div>
+<h3>Rode uma skill</h3>
+<p>O formato é <code>&lt;skill&gt;: &lt;entrada&gt; [| campo]*</code>. Campos genéricos: <code>livesN</code> (destino), <code>modelo=haiku</code>, <code>esforco=high</code>.</p>
 <pre><span class="k">transcrever: https://…</span>                  <span class="c"># áudio → texto</span>
 <span class="k">explicativo: &lt;assunto&gt; | vertical</span>       <span class="c"># vídeo 9:16</span>
 <span class="k">imagem: uma raposa ruiva na neve | ratio=16:9</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">5</div><div>
-    <h3>Rode um fluxo — sempre em sombra primeiro</h3>
-    <p><code>| sombra</code> imprime fase × alvo × fila × tarefa e <strong>não enfileira nada</strong>. É o jeito barato de descobrir que você ia disparar 12 públicos por engano.</p>
+</div></div>
+<div class="step"><div class="b">5</div><div>
+<h3>Rode um fluxo — sempre em sombra primeiro</h3>
+<p><code>| sombra</code> imprime fase × alvo × fila × tarefa e <strong>não enfileira nada</strong>. É o jeito barato de descobrir que você ia disparar 12 públicos por engano.</p>
 <pre><span class="k">/promoavatar &lt;assunto&gt; | sombra</span>
 <span class="k">/promoavatar &lt;assunto&gt; --alvo=jovens</span>
 <span class="k">/promoavatar &lt;assunto&gt; | alvos=mulheres | legenda</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">6</div><div>
-    <h3>Acompanhe e libere o portão</h3>
-    <p><code>/status</code> é o painel dos fluxos ABERTOS; <code>/completos</code> lista os que terminaram. <code>A#9</code>, <code>a#9</code>, <code>A9</code> e <code>a9</code> são a mesma coisa — só número (<code>13</code>) é sempre job.</p>
+</div></div>
+<div class="step"><div class="b">6</div><div>
+<h3>Acompanhe e libere o portão</h3>
+<p><code>/status</code> é o painel dos fluxos ABERTOS; <code>/completos</code> lista os que terminaram. <code>A#9</code>, <code>a#9</code>, <code>A9</code> e <code>a9</code> são a mesma coisa — só número (<code>13</code>) é sempre job.</p>
 <pre><span class="k">/status</span>            <span class="c"># fluxos abertos</span>
 <span class="k">/status A#9</span>        <span class="c"># detalhe fase × alvo</span>
 <span class="k">/fila</span>              <span class="c"># rodando, pendentes, erro em 24h</span>
 <span class="k">/pronto A#9</span>        <span class="c"># = /aprovar — libera o portão</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">7</div><div>
-    <h3>Conserte o que falhou, sem refazer tudo</h3>
-    <p><code>/refazer</code> num fluxo retoma da fase que falhou; num alvo só, refaz aquele alvo. <code>/cancelar</code> tira da lista sem apagar nada do que já foi criado fora.</p>
+</div></div>
+<div class="step"><div class="b">7</div><div>
+<h3>Conserte o que falhou, sem refazer tudo</h3>
+<p><code>/refazer</code> num fluxo retoma da fase que falhou; num alvo só, refaz aquele alvo. <code>/cancelar</code> tira da lista sem apagar nada do que já foi criado fora.</p>
 <pre><span class="k">/refazer A#9 mulheres</span>   <span class="c"># só o público que falhou</span>
 <span class="k">/cancelar A#9</span>           <span class="c"># some do /status; o fluxo continua existindo</span>
 <span class="k">/furar j13</span>              <span class="c"># põe um job pendente na frente</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">8</div><div>
-    <h3>Limpe espaço com dry-run</h3>
-    <p>Sem a palavra <code>confirmar</code> no fim, só mostra o que sairia e quanto libera. O bot só toca no que ELE publicou dentro de <code>~/projetos/output</code>.</p>
+</div></div>
+<div class="step"><div class="b">8</div><div>
+<h3>Limpe espaço com dry-run</h3>
+<p>Sem a palavra <code>confirmar</code> no fim, só mostra o que sairia e quanto libera. O bot só toca no que ELE publicou dentro de <code>~/projetos/output</code>.</p>
 <pre><span class="k">/espaco</span>                  <span class="c"># disco por área (bot × skills)</span>
 <span class="k">/limpar A#8</span>              <span class="c"># dry-run</span>
 <span class="k">/limpar A#8 confirmar</span>    <span class="c"># executa</span></pre>
-  </div></div>
-
-  <div class="step"><div class="b">9</div><div>
-    <h3>Antes de reiniciar, confira a fila</h3>
-    <p><code>claude saiu com código 143</code> é <code>128 + 15</code> = SIGTERM: o job foi morto por um restart do serviço, não por erro do agente. Um render de reel leva 10–15 min — dois restarts seguidos esgotam as duas tentativas do mesmo job.</p>
+</div></div>
+<div class="step"><div class="b">9</div><div>
+<h3>Antes de reiniciar, confira a fila</h3>
+<p><code>claude saiu com código 143</code> é <code>128 + 15</code> = SIGTERM: o job foi morto por um restart do serviço, não por erro do agente. Um render de reel leva 10–15 min — dois restarts seguidos esgotam as duas tentativas do mesmo job.</p>
 <pre><span class="k">sqlite3 inemaccbot.db</span> \
   <span class="s">"select id,fila,tarefa,status,flow_ref from jobs
    where status in ('queued','running');"</span>
 <span class="c"># vazio → reinicie à vontade. Com render em voo → espere.</span></pre>
-  </div></div>
+</div></div>
 </div></section>
-
 <section id="dominio"><div class="wrap">
-  <span class="chip">Domínio novo</span>
-  <h2>Acrescentar trabalho sem tocar no bot</h2>
-  <p class="sub">Este é o teste do desenho: domínio novo não deve exigir linha de código no bot. Escolha entre skill e fluxo pelo critério do trabalho parcial.</p>
-  <div class="grid g2">
-    <div class="card">
-      <h3>Uma SKILL — uma etapa, sem estado</h3>
-      <p>Vale quando "rodar de novo do zero" é aceitável. Escreva o prompt, declare no registry, rode os testes. Campo declarado tem que ser usado no prompt, e variável do prompt tem que ser declarada — há teste para os dois lados.</p>
+<span class="chip">Domínio novo</span>
+<h2>Acrescentar trabalho sem tocar no bot</h2>
+<p class="sub">Este é o teste do desenho: domínio novo não deve exigir linha de código no bot. Escolha entre skill e fluxo pelo critério do trabalho parcial.</p>
+<div class="grid g2">
+<div class="card">
+<h3>Uma SKILL — uma etapa, sem estado</h3>
+<p>Vale quando "rodar de novo do zero" é aceitável. Escreva o prompt, declare no registry, rode os testes. Campo declarado tem que ser usado no prompt, e variável do prompt tem que ser declarada — há teste para os dois lados.</p>
 <pre><span class="c"># 1. prompts/minhaskill.md — usa {{input}} e {{saida}},</span>
 <span class="c">#    e a última linha do agente é RESULT: &lt;caminho&gt;</span>
 <span class="c"># 2. config/skills.json</span>
@@ -273,47 +258,44 @@ LOG_FILE=<span class="s">./inemaccbot.log</span></pre></div>
   <span class="s">"prompt"</span>: <span class="s">"prompts/minhaskill.md"</span>, <span class="s">"artefato_exts"</span>: [<span class="s">"txt"</span>],
   <span class="s">"max_tentativas"</span>: 2, <span class="s">"timeout_segundos"</span>: 3600 }
 <span class="c"># 3.</span> <span class="k">npm test</span></pre>
-    </div>
-    <div class="card">
-      <h3>Um FLUXO — várias fases, com estado</h3>
-      <p>Vale quando há trabalho parcial que seria absurdo jogar fora. Ganha <code>/status</code>, <code>/refazer</code> seletivo, retomada e definição congelada. O domínio diz para QUEM; o bot sabe ONDE — nunca ponha caminho no <code>flow.json</code>.</p>
+</div>
+<div class="card">
+<h3>Um FLUXO — várias fases, com estado</h3>
+<p>Vale quando há trabalho parcial que seria absurdo jogar fora. Ganha <code>/status</code>, <code>/refazer</code> seletivo, retomada e definição congelada. O domínio diz para QUEM; o bot sabe ONDE — nunca ponha caminho no <code>flow.json</code>.</p>
 <pre><span class="c"># 1. repo ~/projetos/&lt;nome&gt; com flow.json + prompts/</span>
 <span class="c"># 2. flow.json: nome, prefixo (o P de P#16), versao_def,</span>
 <span class="c">#    alvos e fases (id, escopo, fila, kind, tarefa…)</span>
 <span class="c"># 3. config/fluxos.json: { command, repo, descricao, exemplo }</span>
 <span class="c"># 4. confira sem gastar nada:</span>
 <span class="k">/&lt;fluxo&gt; &lt;assunto&gt; | sombra</span></pre>
-    </div>
-  </div>
-  <p class="sub" style="margin-top:22px">Todo domínio que entra no catálogo <strong>responde ajuda</strong> — não por disciplina, por construção: quem entende escreve (<code>HELP.md</code> no fluxo, <code>&lt;prompt&gt;.help.md</code> na skill) e, se não escreveu, a ajuda é derivada do mesmo registro que o bot usa para executar. Um teste varre os dois catálogos e falha se algum domínio não responder ajuda utilizável.</p>
-  <div class="flow">
-    <span>promoavatar (A#)</span><span class="arr">·</span>
-    <span>promoavatar3 (C#)</span>
-  </div>
+</div>
+</div>
+<p class="sub" style="margin-top:22px">Todo domínio que entra no catálogo <strong>responde ajuda</strong> — não por disciplina, por construção: quem entende escreve (<code>HELP.md</code> no fluxo, <code>&lt;prompt&gt;.help.md</code> na skill) e, se não escreveu, a ajuda é derivada do mesmo registro que o bot usa para executar. Um teste varre os dois catálogos e falha se algum domínio não responder ajuda utilizável.</p>
+<div class="flow">
+<span>promoavatar (A#)</span><span class="arr">·</span>
+<span>promoavatar3 (C#)</span>
+</div>
 </div></section>
-
 <section id="roadmap"><div class="wrap">
-  <span class="chip">Estado</span>
-  <h2>O que está pronto, e o que não existe de propósito</h2>
-  <p class="sub">Etapas 0 a 5 concluídas, mais os fluxos de domínio. O v1 (<code>inemaccvbot</code>, <code>mkivideos</code>, <code>mkitexto</code>) está desligado.</p>
-  <div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Fila durável</strong><span>SQLite em WAL, lease com heartbeat, drain, claim atômico, recuperação no boot.</span></div></div>
-  <div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Gateway Telegram</strong><span>Allowlist de chat, parse de comandos puro (sem grammy), corte de mensagem, notificação de job terminado.</span></div></div>
-  <div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Skills como agente</strong><span>transcrever · dublar · explicativo · curso · demo · reel · reelinematds · historia · imagem.</span></div></div>
-  <div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Motor de fluxos</strong><span>Estado por fase e alvo, definição congelada, portão humano e retomada.</span></div></div>
-  <div class="phase"><div class="tag">Aberto</div><div class="d"><strong>Sair do Telegram</strong><span>WhatsApp, e-mail ou chatbot: a costura do gateway já existe; o que trava é <code>chat_id</code> ser <code>INTEGER</code>. Recomendação em análise: não trocar, acrescentar.</span></div></div>
-  <div class="phase"><div class="tag">Aberto</div><div class="d"><strong>Imagem e link como material</strong><span>Aceitar imagem e link como entrada de um fluxo — análise escrita, decisão não tomada.</span></div></div>
-  <div class="phase"><div class="tag">Fora</div><div class="d"><strong>O que não existe de propósito</strong><span>Barreira entre fases, preempção de job, teto global de agentes, multiusuário — cada um com o gatilho documentado para reconsiderar.</span></div></div>
+<span class="chip">Estado</span>
+<h2>O que está pronto, e o que não existe de propósito</h2>
+<p class="sub">Etapas 0 a 5 concluídas, mais os fluxos de domínio. O v1 (<code>inemaccvbot</code>, <code>mkivideos</code>, <code>mkitexto</code>) está desligado.</p>
+<div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Fila durável</strong><span>SQLite em WAL, lease com heartbeat, drain, claim atômico, recuperação no boot.</span></div></div>
+<div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Gateway Telegram</strong><span>Allowlist de chat, parse de comandos puro (sem grammy), corte de mensagem, notificação de job terminado.</span></div></div>
+<div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Skills como agente</strong><span>transcrever · dublar · explicativo · curso · demo · reel · reelinematds · historia · imagem.</span></div></div>
+<div class="phase"><div class="tag">Pronto</div><div class="d"><strong>Motor de fluxos</strong><span>Estado por fase e alvo, definição congelada, portão humano e retomada.</span></div></div>
+<div class="phase"><div class="tag">Aberto</div><div class="d"><strong>Sair do Telegram</strong><span>WhatsApp, e-mail ou chatbot: a costura do gateway já existe; o que trava é <code>chat_id</code> ser <code>INTEGER</code>. Recomendação em análise: não trocar, acrescentar.</span></div></div>
+<div class="phase"><div class="tag">Aberto</div><div class="d"><strong>Imagem e link como material</strong><span>Aceitar imagem e link como entrada de um fluxo — análise escrita, decisão não tomada.</span></div></div>
+<div class="phase"><div class="tag">Fora</div><div class="d"><strong>O que não existe de propósito</strong><span>Barreira entre fases, preempção de job, teto global de agentes, multiusuário — cada um com o gatilho documentado para reconsiderar.</span></div></div>
 </div></section>
-
 <footer>
-  <div class="wrap">
-    <div class="pill">TypeScript</div><div class="pill">SQLite (WAL)</div><div class="pill">grammY</div><div class="pill">vitest</div><div class="pill">systemd</div>
-    <p style="margin-top:18px">inemaccbot · gateway Telegram + fila durável ·
+<div class="wrap">
+<div class="pill">TypeScript</div><div class="pill">SQLite (WAL)</div><div class="pill">grammY</div><div class="pill">vitest</div><div class="pill">systemd</div>
+<p style="margin-top:18px">inemaccbot · gateway Telegram + fila durável ·
       <a href="https://github.com/inematds/inemaccbot">inematds/inemaccbot</a> ·
       <a href="https://inema.club">INEMA.CLUB</a></p>
-  </div>
+</div>
 </footer>
-
 <script>
   (function(){
     var KEY='inemaccbot-theme';
